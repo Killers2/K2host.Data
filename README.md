@@ -55,16 +55,16 @@ The ODataExceptionType attribute tells the ODataObject extentions to either igno
 public class OErpUser : ErpObject<OErpUser>, IErpUser
 {
 
-	[TSQLDataType(SqlDbType.BigInt)]
-	public long CompanyId { get; set; }
+    [TSQLDataType(SqlDbType.BigInt)]
+    public long CompanyId { get; set; }
 
-	[TSQLDataType(SqlDbType.BigInt)]
-	public long DepartmentId { get; set; }
+    [TSQLDataType(SqlDbType.BigInt)]
+    public long DepartmentId { get; set; }
 
-	[TSQLDataType(SqlDbType.NVarChar, 255)]
-	public string Username { get; set; }
+    [TSQLDataType(SqlDbType.NVarChar, 255)]
+    public string Username { get; set; }
 
-	[TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
+    [TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
     public IErpUserRole[] Roles { get; set; }
 
     public OErpUser(string connectionString)
@@ -76,6 +76,8 @@ public class OErpUser : ErpObject<OErpUser>, IErpUser
 }
 ```
 Every model you create will always need the connection string to your database passed from some other instance or / and variable.
+
+# Examples of running querties.
 
 
 
