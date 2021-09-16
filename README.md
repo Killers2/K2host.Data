@@ -264,6 +264,8 @@ OErpCommerceManufacturer[] Manufacturers = OErpCommerceManufacturer.List(0,
 ```
 # Examples of query building.
 
+You can use the builders in this way to compile the query to value the query string used to pull data from the database.<br />
+This is done by using the ToString() method on the builders instance. (Unit testing is also a good way using the builders).
 This example shows the select query builder.
 
 ```c#
@@ -333,31 +335,152 @@ ODataSelectQuery s = new() {
 Debug.Write(s.ToString());
 ```
 
-
-
-
+This example shows the update query builder.
 
 ```c#
+ODataUpdateQuery s = new() {
+      UseFieldDefaultAlias    = false
+    , UseFieldPrefixing       = false
+    , Fields = new ODataFieldSet[] {
+        new ODataFieldSet() { 
+            Column      = typeof(OErpCommerceSupplier).GetProperty("Name"), 
+            NewValue    = "Computer 2000 NewTest"
+        },
+        new ODataFieldSet() {
+            Column      = typeof(OErpCommerceSupplier).GetProperty("Credit"),
+            NewValue    = 26000.00M
+        }
+    }
+    , From = typeof(OErpCommerceSupplier)
+    , Where = new ODataCondition[] {
+        new ODataCondition() {
+            Column      = typeof(OErpCommerceSupplier).GetProperty("Uid"),
+            Operator    = ODataOperator.EQUAL,
+            Values      = new object[] { 1 }
+        }
+    }
+};
 
-
+Debug.Write(s.ToString());
 ```
+
+This example shows the update query builder.
+
 ```c#
+ODataInsertQuery s = new()
+{
+      UseIdentityInsert = false
+    , To = typeof(OErpCommerceSupplier)
+    , Fields = new ODataFieldSet[] {
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("ParentId"),        NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("CompanyId"),       NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("DepartmentId"),    NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Name"),            NewValue = "Computers 2020" },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Credit"),          NewValue = 27000.00M },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Logo"),            NewValue = string.Empty },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Url"),             NewValue = string.Empty },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Username"),        NewValue = string.Empty },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Password"),        NewValue = string.Empty },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Status"),          NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("AccountManagerId"),NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("ViewOrder"),       NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("CategoryId"),      NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Flags"),           NewValue = 0 },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Updated"),         NewValue = DateTime.Now },
+        new ODataFieldSet() { Column = typeof(OErpCommerceSupplier).GetProperty("Datestamp"),       NewValue = DateTime.Now },
+    }
+};
 
-
+Debug.Write(s.ToString());
 ```
+
+# Example of query with applies and stuff.
+
+This example shows off the Stuff function query and an advanced query.
+
 ```c#
+ODataSelectQuery s = new() {
+    UseFieldDefaultAlias    = false,
+    UseFieldPrefixing       = true,
+    IncludeApplyFields      = false, 
+    IncludeJoinFields       = false,
+    Fields = typeof(OErpUserRole).GetFieldSets(ODataFieldSetType.SELECT).Append(
+        new ODataFieldSet() { 
+            Case = new ODataCase[] {
+                new ODataCase() {
+                    When = new ODataCondition[] {
+                        new ODataCondition() { 
+                            Column = new ODataPropertyInfo("p.[Result]", typeof(String)),
+                            Operator = ODataOperator.IS,
+                            Values = new object[] { null }
+                        }
+                    },
+                    Then = "0,",
+                    Else = new ODataPropertyInfo("p.[Result]", typeof(String))
+                }
+            },
+            Alias = "Policies"
+        }
+    ).ToArray(),
+    From = typeof(OErpUserRole),
+    Joins = new ODataJoinSet[] {
+        new ODataJoinSet() { 
+            JoinType = ODataJoinType.INNER,
+            Join = typeof(OErpUserRoleConnector),
+            JoinOnField  = typeof(OErpUserRoleConnector).GetProperty("EntityId"),
+            JoinEqualsField = typeof(OErpUserRole).GetProperty("Uid")
+        }
+    },
+    Applies = new ODataApplySet[] {
+        new ODataApplySet() { 
+            ApplyType = ODataApplyType.CROSS,
+            Query = new ODataSelectQuery() { 
+                UseFieldDefaultAlias = false,
+                UseFieldPrefixing = false,
+                Stuff = new ODataStuffFunction() { 
+                    Query = new ODataSelectQuery() {
+                        UseFieldDefaultAlias = false,
+                        UseFieldPrefixing = false,
+                        Fields = new ODataFieldSet[] {
+                            new ODataFieldSet() { 
+                                Cast = ODataCast.VARCHAR,
+                                Column = typeof(OErpUserRolePolicy).GetProperty("Ident"),
+                                Suffix = ",",
+                                Alias = "text()"
+                            }
+                        },
+                        From = typeof(OErpUserRolePolicy),
+                        Where = new ODataCondition[] {
+                            new ODataCondition() {
+                                Column = typeof(OErpUserRolePolicy).GetProperty("ParentId"),
+                                Operator = ODataOperator.EQUAL,
+                                Values = new object[] { typeof(OErpUserRoleConnector).GetProperty("EntityId") }
+                            }
+                        },
+                        ForPath = new ODataForPath() { 
+                            PathType = ODataForPathType.XML,
+                            Path = string.Empty
+                        }
+                    },
+                    StartPosistion = 1, 
+                    NumberOfChars = 0, 
+                    ReplacementExpression = string.Empty
+                },
+                Alias = "Result"
+            },
+            Alias = "p"
+        }
+    },
+    Where = new ODataCondition[] {
+        new ODataCondition() {
+            Column = typeof(OErpUserRoleConnector).GetProperty("UserId"),
+            Operator = ODataOperator.EQUAL,
+            Values = new object[] { 1 }
+        }
+    }
+};
 
-
+Debug.Write(s.ToString());
 ```
-```c#
-
-
-```
-```c#
-
-
-```
-```c#
-
-
-```
+For more examples you can look at the K2host.Erp and navigate to the K2host.Erp.Abstarct > ErpObject which implements the IErpAttachment.<br />
+There all of the k2host libraries will mostly use the K2host.Data Library.
