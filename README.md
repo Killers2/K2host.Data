@@ -167,6 +167,74 @@ OErpUser[] users = OErpUser.List(0,
 ).ToArray();
 ```
 
+This next example shows sub queries in fields.
 
+```c#
+OErpUser user = OErpUser.Retrieve(
+    new ODataFieldSet[] {
+        new ODataFieldSet() {
+            SubQuery = new ODataSelectQuery() {
+                Fields = new ODataFieldSet[]{
+                    new ODataFieldSet() { 
+                        Function    = ODataFunction.COUNT,
+                        Column      = typeof(OErpCompany).GetProperty("Uid")
+                    }
+                },
+                From = typeof(OErpCompany),
+                Where = new ODataCondition[] {
+                    new ODataCondition() {
+                        Column      = typeof(OErpCompany).GetProperty("Uid"),
+                        Operator    = ODataOperator.EQUAL,
+                        Values      = new object[] { 1 }
+                    }
+                }
+            },
+            Alias = "CompanyCount"
+        }
+    },
+    new ODataCondition[] {
+        new ODataCondition() {
+            Column      = typeof(OErpUser).GetProperty("Firstname"),
+            Operator    = ODataOperator.EQUAL,
+            Values      = new object[] { "David" }
+        }
+    },
+    null,
+    null,
+    "YOUR CONNECTION STRING", 
+    out ODataException Exception
+);
+```
 
+This next example shows sub queries in a where clause.
+
+```c#
+OErpUser[] users = OErpUser.List(0,
+    new ODataCondition[] {
+        new ODataCondition() {
+            SubQuery = new ODataSelectQuery() {
+                Fields = new ODataFieldSet[] {
+                    new ODataFieldSet() {
+                        Column = typeof(OErpCompany).GetProperty("Uid")
+                    }
+                },
+                From = typeof(OErpCompany),
+                Where = new ODataCondition[] {
+                    new ODataCondition() {
+                        Column      = typeof(OErpCompany).GetProperty("Name"),
+                        Operator    = ODataOperator.EQUAL,
+                        Values      = new object[] { "K2host Services" }
+                    }
+                }
+            },
+            Operator    = ODataOperator.EQUAL,
+            Values      = new object[] { 1 }
+        }
+    },
+    null,
+    null,
+    "YOUR CONNECTION STRING", 
+    out ODataException Exception
+).ToArray();
+```
 
