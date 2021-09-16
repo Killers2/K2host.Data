@@ -77,7 +77,96 @@ public class OErpUser : ErpObject<OErpUser>, IErpUser
 ```
 Every model you create will always need the connection string to your database passed from some other instance or / and variable.
 
-# Examples of running querties.
+# Examples of database queries.
+
+This example uses a CASE as a field set based on the gender and condition set based on the firstname.<br />
+The query will return a single user with the gender name string field based on the gender column.<br />
+The above will throw back an exception on error using the out method while return a default / null value, which inturn will allow options for error handling.
+```c#
+OErpUser user = OErpUser.Retrieve(
+    new ODataFieldSet[] {
+        new ODataFieldSet() { 
+            Case = new ODataCase[] { 
+                new ODataCase() { 
+                    When = new ODataCondition[] { 
+                        new ODataCondition() { 
+                            Column      = typeof(OErpUser).GetProperty("Gender"),
+                            Operator    = ODataOperator.EQUAL,
+                            Values      = new object [] { 0 }
+                        }
+                    },
+                    Then = "Male",
+                    Else = "Female"
+                }
+            },
+            Alias = "GenderName"
+        }
+    },
+    new ODataCondition[] {
+        new ODataCondition() {
+            Column      = typeof(OErpUser).GetProperty("Firstname"),
+            Operator    = ODataOperator.EQUAL,
+            Values      = new object[] { "David" }
+        }
+    },
+    null, 
+    null,
+    "YOUR CONNECTION STRING", 
+    out ODataException Exception
+);
+```
+
+To extend the case in a select type query we can create and array of them show below:
+Specifing the Limit / Top count to 0 we are saying get all.
+
+```c#
+OErpUser[] users = OErpUser.List(0,
+    new ODataCondition[] {
+        new ODataCondition() { 
+            Case = new ODataCase[] {
+                new ODataCase() {
+                    When = new ODataCondition[] {
+                        new ODataCondition()
+                        {
+                            Column      = typeof(OErpUser).GetProperty("Firstname"),
+                            Operator    = ODataOperator.EQUAL,
+                            Values      = new object [] { "David" },
+                            FollowBy    = ODataFollower.AND
+                        },
+                        new ODataCondition()
+                        {
+                            Column      = typeof(OErpUser).GetProperty("Surname"),
+                            Operator    = ODataOperator.EQUAL,
+                            Values      = new object [] { "Host" }
+                        }
+                    },
+                    Then = "Dont Care"
+                },
+                new ODataCase() {
+                    When = new ODataCondition[] {
+                        new ODataCondition()
+                        {
+                            Column      = typeof(OErpUser).GetProperty("Firstname"),
+                            Operator    = ODataOperator.EQUAL,
+                            Values      = new object [] { "David" }
+                        }
+                    },
+                    Then = "David Host",
+                    Else = typeof(OErpUser).GetProperty("Firstname")
+                }
+
+            },
+            Operator = ODataOperator.EQUAL,
+            Values = new object[] { "David Host" } 
+        }
+    },
+    null, 
+    null,
+    "YOUR CONNECTION STRING", 
+    out ODataException Exception
+).ToArray();
+```
+
 
 
 
