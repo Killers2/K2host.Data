@@ -80,12 +80,12 @@ Every model you create will always need the connection string to your database p
 
 # Example of database migration.
 
-To migrate the data base and setup you can use the below.<br />
+To migrate the database and setup you can use the below.<br />
 The migrator takes care of changes like changing a model and adding or removing a property the migrator will add or remove a column.<br />
 But like EntityFramework, be aware removing a property will remove the data when removing a column, the same when removing an unwanted model.
 
 ```c#
-new ODataMigrationTool(Memory.ConnectionString)
+new ODataMigrationTool("YOUR CONNECTION STRING")
 {
     Path            = "THE FULL PATH TO THE DATABASE MDF FILE",
     Version         = "YOUR MIGRATION VERSION CODE NAME",
