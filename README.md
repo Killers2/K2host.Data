@@ -75,7 +75,49 @@ public class OErpUser : ErpObject<OErpUser>, IErpUser
 
 }
 ```
-Every model you create will always need the connection string to your database passed from some other instance or / and variable.
+Every model you create will always need the connection string to your database passed from some other instance or / and variable.<br /><br />
+We can also add some attributes, this first one is for remapping the object to the database, for example:
+
+```c#
+[ODataReMap("OErpUser")]
+public class TErpUser : ErpObject<TErpUser>, IErpUser
+{
+
+    [TSQLDataType(SqlDbType.BigInt)]
+    public long CompanyId { get; set; }
+
+    [TSQLDataType(SqlDbType.BigInt)]
+    public long DepartmentId { get; set; }
+
+    public TErpUser(string connectionString)
+        : base(connectionString)
+    {
+
+    }
+
+}
+```
+However we can also create and add property attributes.
+
+```c#
+public class TErpUser : ErpObject<TErpUser>, IErpUser
+{
+
+    [ODataEncryption(0)]
+    [ODataType(SqlDbType.NVarChar, 4000)]
+    public string AesHash { get; set; }
+
+    public TErpUser(string connectionString)
+        : base(connectionString)
+    {
+
+    }
+
+}
+```
+Where the ODataEncryption attribute will deal with changing the value of the property when reading and writing to database to model.<br />
+We can also set the order for the attribute if there are more than one assigned.
+
 
 
 # Example of database migration.
