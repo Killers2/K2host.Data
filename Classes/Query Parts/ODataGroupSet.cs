@@ -5,57 +5,47 @@
 '| Use: General                                         |
 ' \====================================================/
 */
-using System;
-using System.Text;
 
-using K2host.Core;
-using K2host.Data.Interfaces;
+using System;
+using System.Reflection;
+using System.Text;
 
 namespace K2host.Data.Classes
 {
 
     /// <summary>
-    /// This class help the user create where cases on the ODataObject
+    /// This class help the user create where conditions on the ODataObject
     /// </summary>
-    public class ODataDeleteQuery : IDataQuery
+    public class ODataGroupSet : IDisposable
     {
-     
-        /// <summary>
-        /// The object you are selecting from mapped in the database (table name).
-        /// </summary>
-        public Type From { get; set; }
-        
-        /// <summary>
-        /// Optional: The condition list based on the the when is question
-        /// </summary>
-        public ODataCondition[] Where { get; set; }
 
+        /// <summary>
+        /// The prefix to the start of this segment group.
+        /// </summary>
+        public PropertyInfo Column { get; set; }
+        
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataDeleteQuery() 
+        public ODataGroupSet() 
         {
-            From    = null;
-            Where   = null;
+            Column  = null;
         }
 
         /// <summary>
-        /// This returns and builds the string representation of the query segment.
+        /// This returns the field as a group by field statment.
         /// </summary>
+        /// <param name="UseFieldPrefixing"></param>
         /// <returns></returns>
-        public override string ToString() 
+        public string ToString(bool UseFieldPrefixing = false)
         {
 
             StringBuilder output = new();
-           
-            output.Append("DELETE FROM tbl_" + From.Name);
 
-            if (Where != null) {
-                output.Append(" WHERE ");
-                Where.ForEach(condition => { 
-                    output.Append(condition.ToString(false)); 
-                });
-            }
+            if (UseFieldPrefixing)
+                output.Append(Column.ReflectedType.GetMappedName() + ".");
+
+            output.Append("[" + Column.Name + "]");
 
             return output.ToString();
 

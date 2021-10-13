@@ -5,47 +5,60 @@
 '| Use: General                                         |
 ' \====================================================/
 */
-
 using System;
-using System.Reflection;
 using System.Text;
+
+using K2host.Data.Enums;
 
 namespace K2host.Data.Classes
 {
 
     /// <summary>
-    /// This class help the user create where conditions on the ODataObject
+    /// This class help the user create where cases on the ODataObject
     /// </summary>
-    public class ODataGroupSet : IDisposable
+    public class ODataApplySet : IDisposable
     {
 
         /// <summary>
-        /// The prefix to the start of this segment group.
+        /// The type of apply used for this query
         /// </summary>
-        public PropertyInfo Column { get; set; }
-        
+        public ODataApplyType ApplyType { get; set; }
+
+        /// <summary>
+        /// The query wrapped in the apply type, which would have the linking within.
+        /// </summary>
+        public ODataSelectQuery Query { get; set; }
+
+        /// <summary>
+        /// The apply alias for the main query
+        /// </summary>
+        public string Alias { get; set; }
+
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataGroupSet() 
+        public ODataApplySet() 
         {
-            Column  = null;
+
+            ApplyType   = ODataApplyType.CROSS;
+            Query       = null;
+            Alias       = string.Empty;
         }
 
         /// <summary>
-        /// This returns the field as a group by field statment.
+        /// This returns and builds the string representation of the case segment.
         /// </summary>
-        /// <param name="UseFieldPrefixing"></param>
         /// <returns></returns>
-        public string ToString(bool UseFieldPrefixing = false)
+        public override string ToString() 
         {
 
-            StringBuilder output = new StringBuilder();
+            StringBuilder output = new();
 
-            if (UseFieldPrefixing)
-                output.Append(Column.ReflectedType.Name + ".");
+            output.Append(ApplyType.ToString() + " APPLY (");
 
-            output.Append("[" + Column.Name + "]");
+            output.Append(Query.ToString());
+
+            output.Append(") " + Alias + " ");
 
             return output.ToString();
 

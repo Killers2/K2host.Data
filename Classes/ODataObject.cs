@@ -18,13 +18,14 @@ using Newtonsoft.Json;
 using K2host.Core;
 using K2host.Data.Enums;
 using K2host.Data.Interfaces;
+using K2host.Data.Attributes;
 
 using gl = K2host.Core.OHelpers;
 using gd = K2host.Data.OHelpers;
 
 namespace K2host.Data.Classes
 {
-
+    
     /// <summary>
     /// This object allows you to save a type to an sql database using generic types.
     /// </summary>
@@ -38,63 +39,65 @@ namespace K2host.Data.Classes
         /// <summary>
         /// The record auto id of this type in its own database table.
         /// </summary>
-        [TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE), TSQLDataType(SqlDbType.BigInt)]
+        [ODataType(SqlDbType.BigInt)]
+        [ODataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE)]
         public long Uid { get; private set; }
 
         /// <summary>
         /// The parent Id of the given type maps to a record in a table in the database. 
         /// </summary>
-        [TSQLDataType(SqlDbType.BigInt)]
+        [ODataType(SqlDbType.BigInt)]
         public long ParentId { get; set; }
 
         /// <summary>
         /// The type name as a string which maps to a table in the database.
         /// </summary>
-        [TSQLDataType(SqlDbType.NVarChar, 255)]
+        [ODataType(SqlDbType.NVarChar, 255)]
         public string ParentType { get; set; }
 
         /// <summary>
         /// The record flags if any.
         /// </summary>
-        [TSQLDataType(SqlDbType.BigInt)]
+        [ODataType(SqlDbType.BigInt)]
         public long Flags { get; set; }
 
         /// <summary>
         /// The date and time of the recored being updated.
         /// </summary>
-        [TSQLDataType(SqlDbType.DateTime)]
+        [ODataType(SqlDbType.DateTime)]
         public DateTime Updated { get; set; }
 
         /// <summary>
         /// The date and time of the recored was inserted.
         /// </summary>
-        [TSQLDataException(ODataExceptionType.NON_UPDATE), TSQLDataType(SqlDbType.DateTime)]
+        [ODataType(SqlDbType.DateTime)]
+        [ODataException(ODataExceptionType.NON_UPDATE)]
         public DateTime Datestamp { get; set; }
 
         /// <summary>
         /// The objects database connection string.
         /// </summary>
         [JsonIgnore]
-        [TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
+        [ODataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
         public string ConnectionString { get; set; }
 
         /// <summary>
         /// This holding space allows to hold information / object data while in use.
         /// </summary>
         [JsonIgnore]
-        [TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
+        [ODataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
         public object Tag { get; set; }
 
         /// <summary>
         /// This holds the joined objects when using <see cref="ODataJoinSet"/> from sql.
         /// </summary>
-        [TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
+        [ODataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
         public List<IDataObject> Joins { get; set; }
 
         /// <summary>
         /// This holds the extended field values forn cases, static and other manual fields.
         /// </summary>
-        [TSQLDataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
+        [ODataException(ODataExceptionType.NON_INSERT | ODataExceptionType.NON_UPDATE | ODataExceptionType.NON_SELECT | ODataExceptionType.NON_DELETE | ODataExceptionType.NON_CREATE)]
         public Dictionary<string, object> ExtendedColumns { get; set; }
 
         #endregion
@@ -110,14 +113,14 @@ namespace K2host.Data.Classes
 
             ConnectionString = connectionString;
 
-            Uid = -1;
-            ParentId = 0;
-            ParentType = string.Empty;
-            Flags = 0;
-            Updated = DateTime.Now;
-            Datestamp = DateTime.Now;
-            Tag = null;
-            Joins = new List<IDataObject>();
+            Uid             = -1;
+            ParentId        = 0;
+            ParentType      = string.Empty;
+            Flags           = 0;
+            Updated         = DateTime.Now;
+            Datestamp       = DateTime.Now;
+            Tag             = null;
+            Joins           = new List<IDataObject>();
             ExtendedColumns = new Dictionary<string, object>();
         }
 
@@ -132,7 +135,7 @@ namespace K2host.Data.Classes
         {
 
             if (string.IsNullOrEmpty(typeName))
-                typeName = this.GetType().Name;
+                typeName = this.GetType().GetMappedName();
 
             string error = "K2host.Data." + typeName + ": Error getting this object from the database. ";
 
@@ -147,11 +150,25 @@ namespace K2host.Data.Classes
             {
                 // The last item will be the connection string for connecting to the database
                 List<SqlParameter> parms = new();
-                this.GetType().GetProperties().Each(p => {
-                    if ((p.GetCustomAttributes(typeof(TSQLDataException), true).Length == 0) || (p.GetCustomAttributes(typeof(TSQLDataException), true).Length > 0 && !((TSQLDataException)p.GetCustomAttributes(typeof(TSQLDataException), true)[0]).ODataExceptionType.HasFlag(ODataExceptionType.NON_CREATE)))
-                        parms.Add(gd.ParamMsSql(gd.GetSqlDbType(p.PropertyType), p.GetValue(this, null), "@" + p.Name));
-                    return true;
-                });
+                this.GetType()
+                    .GetProperties()
+                    .ForEach(p => {
+                        if ((p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length == 0) || (p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length > 0 && !((ODataExceptionAttribute)p.GetCustomAttributes(typeof(ODataExceptionAttribute), true)[0]).ODataExceptionType.HasFlag(ODataExceptionType.NON_CREATE)))
+                        {
+
+                            //if there is any ODataProcessorAttribute loop though and read value base on attr.
+                            object value = p.GetValue(this, null);
+                            p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnWriteValue(value); });
+
+                            ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { 
+                                value = c.OnConvertTo(p, value, null); 
+                            });
+
+                            parms.Add(gd.ParamMsSql(gd.GetSqlDbType(p.PropertyType), value, "@" + p.Name)); 
+                        
+                        }
+                    });
+
                 dts = gd.Get("spr_" + typeName, parms.ToArray(), ConnectionString);
             }
 
@@ -242,16 +259,18 @@ namespace K2host.Data.Classes
                     throw new ODataException(error + "No Dataset Table Row(s) Returned.");
 
                 dts.Tables[0].Columns.Each(c => {
-                    this
-                    .GetType()
-                    .GetProperty(c.Caption)
-                    .DeclaringType
-                    .GetProperty(c.Caption, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                    .SetValue(
-                        this,
-                        dts.Tables[0].Rows[0][c.Caption],
-                        null
-                    );
+                    
+                    PropertyInfo p = this.GetType()
+                        .GetProperty(c.Caption)
+                        .DeclaringType
+                        .GetProperty(c.Caption, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    
+                    //if there is any ODataProcessorAttribute loop though and read value base on attr.
+                    object value = dts.Tables[0].Rows[0][c.Caption];
+                    p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnReadValue(value); });
+
+                    p.SetValue(this, value, null);
+
                 });
 
                 gd.Clear(dts);
@@ -284,13 +303,13 @@ namespace K2host.Data.Classes
             this.GetType()
                 .GetProperties()
                 .ForEach(p => {
-                    if ((p.GetCustomAttributes(typeof(TSQLDataException), true).Length == 0) || (p.GetCustomAttributes(typeof(TSQLDataException), true).Length > 0 && !((TSQLDataException)p.GetCustomAttributes(typeof(TSQLDataException), true)[0]).ODataExceptionType.HasFlag(NonInteract)))
+                    if ((p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length == 0) || (p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length > 0 && !((ODataExceptionAttribute)p.GetCustomAttributes(typeof(ODataExceptionAttribute), true)[0]).ODataExceptionType.HasFlag(NonInteract)))
                         output.Add(
                             new ODataFieldSet()
                             {
-                                Column = p,
-                                NewValue = gd.GetSqlRepresentation(p, p.GetValue(this)),
-                                DataType = gd.GetSqlDbType(p.PropertyType)
+                                Column      = p,
+                                NewValue    = gd.GetSqlRepresentation(p, p.GetValue(this)),
+                                DataType    = gd.GetSqlDbType(p.PropertyType)
                             }
                         );
                 });
@@ -984,18 +1003,18 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
-            {
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Where = new ODataCondition[] {
+            DataSet dts = gd.Get(
+                new ODataSelectQuery() {
+                    Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                    From = typeof(I),
+                    Where = new ODataCondition[] {
                         new ODataCondition() {
                             Column      = typeof(I).GetProperty("Uid"),
                             Operator    = ODataOperator.EQUAL,
                             Values      = new object[] { pUid }
                         }
                     }
-            }.ToString(),
+                }.ToString(),
                 pConnectionString
             );
 
@@ -1039,14 +1058,14 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
-            {
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString(),
+            DataSet dts = gd.Get(
+                new ODataSelectQuery() {
+                    Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                    From = typeof(I),
+                    Where = pConditions,
+                    Order = pSqlOrder,
+                    TakeSkip = pTakeSkip
+                }.ToString(),
                 pConnectionString
             );
 
@@ -1091,14 +1110,14 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
-            {
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT).Concat(pExtra).ToArray(),
-                From = typeof(I),
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString(),
+            DataSet dts = gd.Get(
+                new ODataSelectQuery() {
+                    Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT).Concat(pExtra).ToArray(),
+                    From = typeof(I),
+                    Where = pConditions,
+                    Order = pSqlOrder,
+                    TakeSkip = pTakeSkip
+                }.ToString(),
                 pConnectionString
             );
 
@@ -1233,16 +1252,16 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
-            {
-                Top = pTop,
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Joins = pJoins,
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString(),
+            DataSet dts = gd.Get(
+                new ODataSelectQuery() {
+                    Top = pTop,
+                    Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                    From = typeof(I),
+                    Joins = pJoins,
+                    Where = pConditions,
+                    Order = pSqlOrder,
+                    TakeSkip = pTakeSkip
+                }.ToString(),
                 pConnectionString
             );
 
@@ -1311,18 +1330,21 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
+            var Query = new ODataSelectQuery()
             {
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Where = new ODataCondition[] {
-                        new ODataCondition() {
-                            Column      = typeof(I).GetProperty("Uid"),
-                            Operator    = ODataOperator.EQUAL,
-                            Values      = new object[] { pUid }
-                        }
+                Fields  = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                From    = typeof(I),
+                Where   = new ODataCondition[] {
+                    new ODataCondition() {
+                        Column      = typeof(I).GetProperty("Uid"),
+                        Operator    = ODataOperator.EQUAL,
+                        Values      = new object[] { pUid }
                     }
-            }.ToString() + " FOR JSON PATH, ROOT('" + typeof(I).Name + "')",
+                }
+            };
+
+            DataSet dts = gd.Get(
+                Query.ToString() + " FOR JSON PATH, ROOT('" + Query.From.GetMappedName() + "')",
                 pConnectionString
             );
 
@@ -1369,14 +1391,17 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
+            var Query = new ODataSelectQuery()
             {
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString() + " FOR JSON PATH, ROOT('" + typeof(I).Name + "')",
+                Fields      = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                From        = typeof(I),
+                Where       = pConditions,
+                Order       = pSqlOrder,
+                TakeSkip    = pTakeSkip
+            };
+
+            DataSet dts = gd.Get(
+                Query.ToString() + " FOR JSON PATH, ROOT('" + Query.From.GetMappedName() + "')",
                 pConnectionString
             );
 
@@ -1424,14 +1449,17 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
+            var Query = new ODataSelectQuery()
             {
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT).Concat(pExtra).ToArray(),
-                From = typeof(I),
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString() + " FOR JSON PATH, ROOT('" + typeof(I).Name + "')",
+                Fields      = typeof(I).GetFieldSets(ODataFieldSetType.SELECT).Concat(pExtra).ToArray(),
+                From        = typeof(I),
+                Where       = pConditions,
+                Order       = pSqlOrder,
+                TakeSkip    = pTakeSkip
+            };
+
+            DataSet dts = gd.Get(
+                Query.ToString() + " FOR JSON PATH, ROOT('" + Query.From.GetMappedName() + "')",
                 pConnectionString
             );
 
@@ -1476,15 +1504,18 @@ namespace K2host.Data.Classes
         {
 
             ex = null;
-
-            DataSet dts = gd.Get(new ODataSelectQuery()
+           
+            var Query = new ODataSelectQuery()
             {
-                Top = pTop,
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString() + " FOR JSON PATH, ROOT('" + typeof(I).Name + "')",
+                Top         = pTop,
+                Fields      = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                From        = typeof(I),
+                Order       = pSqlOrder,
+                TakeSkip    = pTakeSkip
+            };
+
+            DataSet dts = gd.Get(
+                Query.ToString() + " FOR JSON PATH, ROOT('" + Query.From.GetMappedName() + "')",
                 pConnectionString
             );
 
@@ -1526,15 +1557,18 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
+            var Query = new ODataSelectQuery()
             {
-                Top = pTop,
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString() + " FOR JSON PATH, ROOT('" + typeof(I).Name + "')",
+                Top         = pTop,
+                Fields      = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                From        = typeof(I),
+                Where       = pConditions,
+                Order       = pSqlOrder,
+                TakeSkip    = pTakeSkip
+            };
+
+            DataSet dts = gd.Get(
+                Query.ToString() + " FOR JSON PATH, ROOT('" + Query.From.GetMappedName() + "')",
                 pConnectionString
             );
 
@@ -1576,16 +1610,18 @@ namespace K2host.Data.Classes
 
             ex = null;
 
-            DataSet dts = gd.Get(new ODataSelectQuery()
-            {
-                Top = pTop,
-                Fields = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
-                From = typeof(I),
-                Joins = pJoins,
-                Where = pConditions,
-                Order = pSqlOrder,
-                TakeSkip = pTakeSkip
-            }.ToString() + " FOR JSON PATH, ROOT('" + typeof(I).Name + "')",
+            var Query = new ODataSelectQuery() {
+                Top         = pTop,
+                Fields      = typeof(I).GetFieldSets(ODataFieldSetType.SELECT),
+                From        = typeof(I),
+                Joins       = pJoins,
+                Where       = pConditions,
+                Order       = pSqlOrder,
+                TakeSkip    = pTakeSkip
+            };
+
+            DataSet dts = gd.Get(
+                Query.ToString() + " FOR JSON PATH, ROOT('" + Query.From.GetMappedName() + "')",
                 pConnectionString
             );
 
@@ -1601,7 +1637,10 @@ namespace K2host.Data.Classes
                 return default;
             }
 
-            string output = dts.Tables[0].Rows[0][0].ToString();
+            string output = string.Empty;
+
+            foreach (DataRow r in dts.Tables[0].Rows)
+                output += r[0].ToString();
 
             gd.Clear(dts);
 
@@ -1625,7 +1664,7 @@ namespace K2host.Data.Classes
             string suffix = string.Empty;
 
             if (enableTotalCount)
-                suffix += "; SELECT COUNT(*) FROM tbl_" + Query.From.Name + ";";
+                suffix += "; SELECT COUNT(*) FROM tbl_" + Query.From.GetMappedName() + ";";
 
             DataSet dts = gd.Get(Query.ToString() + suffix, pConnectionString);
 
@@ -1702,15 +1741,17 @@ namespace K2host.Data.Classes
 
             Type obj = typeof(I);
             StringBuilder output = new();
+            
+            var tnm = obj.GetTypeInfo().GetMappedName();
 
-            output.Append("IF (OBJECT_ID (N'tbl_" + obj.GetTypeInfo().Name + "', N'U') IS NOT NULL)" + Environment.NewLine);
+            output.Append("IF (OBJECT_ID (N'tbl_" + tnm + "', N'U') IS NOT NULL)" + Environment.NewLine);
             output.Append("BEGIN" + Environment.NewLine);
-            output.Append("    IF ((SELECT COUNT([Uid]) FROM [dbo].[tbl_" + obj.GetTypeInfo().Name + "]) > 0)" + Environment.NewLine);
+            output.Append("    IF ((SELECT COUNT([Uid]) FROM [dbo].[tbl_" + tnm + "]) > 0)" + Environment.NewLine);
             output.Append("    BEGIN" + Environment.NewLine);
             output.Append("        DECLARE @a VARCHAR(255)" + Environment.NewLine);
             output.Append("        DECLARE cc CURSOR" + Environment.NewLine);
             output.Append("        FOR" + Environment.NewLine);
-            output.Append("        SELECT [name] FROM sys.objects WHERE [type_desc] = 'DEFAULT_CONSTRAINT' AND OBJECT_NAME(parent_object_id) = 'tbl_" + obj.GetTypeInfo().Name + "'" + Environment.NewLine);
+            output.Append("        SELECT [name] FROM sys.objects WHERE [type_desc] = 'DEFAULT_CONSTRAINT' AND OBJECT_NAME(parent_object_id) = 'tbl_" + tnm + "'" + Environment.NewLine);
             output.Append("        OPEN cc" + Environment.NewLine);
             output.Append("        FETCH NEXT FROM cc INTO @a" + Environment.NewLine);
             output.Append("        WHILE @@FETCH_STATUS = 0" + Environment.NewLine);
@@ -1725,14 +1766,14 @@ namespace K2host.Data.Classes
             output.Append("            END" + Environment.NewLine);
             output.Append("        CLOSE cc" + Environment.NewLine);
             output.Append("        DEALLOCATE cc" + Environment.NewLine);
-            output.Append("        EXEC sp_rename N'PK_" + obj.GetTypeInfo().Name + "', N'PK_" + obj.GetTypeInfo().Name + "_OLD', N'OBJECT';" + Environment.NewLine);
-            output.Append("        EXEC sp_rename 'tbl_" + obj.GetTypeInfo().Name + "', 'old_" + obj.GetTypeInfo().Name + "'; " + Environment.NewLine);
+            output.Append("        EXEC sp_rename N'PK_" + tnm + "', N'PK_" + tnm + "_OLD', N'OBJECT';" + Environment.NewLine);
+            output.Append("        EXEC sp_rename 'tbl_" + tnm + "', 'old_" + tnm + "'; " + Environment.NewLine);
             output.Append("    END" + Environment.NewLine);
             output.Append("    ELSE" + Environment.NewLine);
             output.Append("    BEGIN" + Environment.NewLine);
-            output.Append("        DROP TABLE IF EXISTS tbl_" + obj.GetTypeInfo().Name + Environment.NewLine);
+            output.Append("        DROP TABLE IF EXISTS tbl_" + tnm + Environment.NewLine);
             output.Append("    END" + Environment.NewLine);
-            output.Append("    DROP PROCEDURE IF EXISTS spr_" + obj.GetTypeInfo().Name + Environment.NewLine);
+            output.Append("    DROP PROCEDURE IF EXISTS spr_" + tnm + Environment.NewLine);
             output.Append("END" + Environment.NewLine);
 
             gd.Query(
@@ -1746,9 +1787,9 @@ namespace K2host.Data.Classes
 
             output = new();
 
-            output.Append("IF (OBJECT_ID (N'old_" + obj.GetTypeInfo().Name + "', N'U') IS NOT NULL)" + Environment.NewLine);
+            output.Append("IF (OBJECT_ID (N'old_" + tnm + "', N'U') IS NOT NULL)" + Environment.NewLine);
             output.Append("BEGIN" + Environment.NewLine);
-            output.Append("    SET IDENTITY_INSERT [tbl_" + obj.GetTypeInfo().Name + "] ON;" + Environment.NewLine);
+            output.Append("    SET IDENTITY_INSERT [tbl_" + tnm + "] ON;" + Environment.NewLine);
 
             output.Append("    DECLARE @query NVARCHAR(MAX) ='" + Environment.NewLine);
 
@@ -1759,27 +1800,27 @@ namespace K2host.Data.Classes
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => p.GetCustomAttribute(typeof(TSQLDataType), true) != null && !ignore.Contains(p.Name))
+                .Where(p => p.GetCustomAttribute(typeof(ODataTypeAttribute), true) != null && !ignore.Contains(p.Name))
                 .ToArray()
                 .Each(p => {
                     SqlDbType dbt = gd.GetSqlDbType(p.PropertyType);
-                    output.Append("    (CASE WHEN EXISTS (SELECT 1 FROM syscolumns WHERE name = '" + p.Name + "' AND id = OBJECT_ID('old_" + obj.GetTypeInfo().Name + "')) THEN '[" + p.Name + "],' ELSE '" + gd.GetSqlDefaultValueRepresentation(dbt, true) + " AS [" + p.Name + "],' END) + " + Environment.NewLine);
+                    output.Append("    (CASE WHEN EXISTS (SELECT 1 FROM syscolumns WHERE name = '" + p.Name + "' AND id = OBJECT_ID('old_" + tnm + "')) THEN '[" + p.Name + "],' ELSE '" + gd.GetSqlDefaultValueRepresentation(dbt, true) + " AS [" + p.Name + "],' END) + " + Environment.NewLine);
                     return true;
                 });
 
             output.Append("   '[Flags]," + Environment.NewLine);
             output.Append("    [Updated]," + Environment.NewLine);
             output.Append("    [Datestamp]" + Environment.NewLine);
-            output.Append("    FROM [old_" + obj.GetTypeInfo().Name + "]'" + Environment.NewLine);
+            output.Append("    FROM [old_" + tnm + "]'" + Environment.NewLine);
 
-            output.Append("    INSERT INTO [tbl_" + obj.GetTypeInfo().Name + "] (" + Environment.NewLine);
+            output.Append("    INSERT INTO [tbl_" + tnm + "] (" + Environment.NewLine);
             output.Append("    [Uid]," + Environment.NewLine);
             output.Append("    [ParentId]," + Environment.NewLine);
             output.Append("    [ParentType]," + Environment.NewLine);
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => p.GetCustomAttribute(typeof(TSQLDataType), true) != null && !ignore.Contains(p.Name))
+                .Where(p => p.GetCustomAttribute(typeof(ODataTypeAttribute), true) != null && !ignore.Contains(p.Name))
                 .ToArray()
                 .Each(p => {
                     output.Append("    [" + p.Name + "]," + Environment.NewLine);
@@ -1792,9 +1833,9 @@ namespace K2host.Data.Classes
 
             output.Append("    ) EXEC sp_executesql @query;" + Environment.NewLine);
 
-            output.Append("    SET IDENTITY_INSERT [tbl_" + obj.GetTypeInfo().Name + "] OFF;" + Environment.NewLine);
+            output.Append("    SET IDENTITY_INSERT [tbl_" + tnm + "] OFF;" + Environment.NewLine);
             output.Append("END" + Environment.NewLine);
-            output.Append("DROP TABLE IF EXISTS [old_" + obj.GetTypeInfo().Name + "];" + Environment.NewLine);
+            output.Append("DROP TABLE IF EXISTS [old_" + tnm + "];" + Environment.NewLine);
 
             gd.Query(
                 output.ToString(),
@@ -1861,12 +1902,12 @@ namespace K2host.Data.Classes
             };
 
             typeof(I).GetProperties().ForEach(p => {
-                if ((p.GetCustomAttributes(typeof(TSQLDataException), true).Length == 0) || (p.GetCustomAttributes(typeof(TSQLDataException), true).Length > 0 && !((TSQLDataException)p.GetCustomAttributes(typeof(TSQLDataException), true)[0]).ODataExceptionType.HasFlag(NonInteract)))
+                if ((p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length == 0) || (p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length > 0 && !((ODataExceptionAttribute)p.GetCustomAttributes(typeof(ODataExceptionAttribute), true)[0]).ODataExceptionType.HasFlag(NonInteract)))
                     output.Add(
                         new ODataFieldSet()
                         {
-                            Column = p,
-                            DataType = gd.GetSqlDbType(p.PropertyType)
+                            Column      = p,
+                            DataType    = gd.GetSqlDbType(p.PropertyType)
                         }
                     );
             });
@@ -1896,25 +1937,31 @@ namespace K2host.Data.Classes
                     try
                     {
 
-                        string cname = c.Caption;
-                        bool isPrefixed = cname.Contains(".");
+                        string  cname       = c.Caption;
+                        bool    isPrefixed  = cname.Contains(".");
 
                         if (isPrefixed)
                             cname = cname.Remove(0, cname.IndexOf(".") + 1);
 
-                        result
-                            .GetType()
-                            .GetProperty(cname)
-                            .DeclaringType
-                            .GetProperty(cname, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                            .SetValue(
-                                result,
-                                e.Tables[0].Rows[0][c.Caption],
-                                null
-                            );
+                        PropertyInfo p = result.GetType()
+                            .GetProperty(cname).DeclaringType
+                            .GetProperty(cname, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+
+
+                        //if there is any ODataProcessorAttribute loop though and read value base on attr.
+                        object value = e.Tables[0].Rows[0][c.Caption];
+                        p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnReadValue(value); });
+
+                        //Loop though converters that can convert on this property and set the value.
+                        ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { value = c.OnConvertFrom(p, value, (IDataObject)result); });
+
+                        //Setup the prop value based on the output of the converters and attributes.
+                        p.SetValue(result, value, null);
+
                     }
                     catch (Exception)
                     {
+                        //If the column from the query is not in the DMM then we add it to the models extended columns list.
                         ((IDataObject)result).ExtendedColumns.Add(c.Caption, e.Tables[0].Rows[0][c.Caption]);
                     }
 
@@ -1959,9 +2006,19 @@ namespace K2host.Data.Classes
 
                         if (lookup.Any())
                         {
-                            result.GetType().GetProperty(c.Caption).DeclaringType
-                                .GetProperty(c.Caption, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                                .SetValue(result, r[c.Caption], null);
+                            PropertyInfo p = result.GetType()
+                                .GetProperty(c.Caption).DeclaringType
+                                .GetProperty(c.Caption, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+
+                            //if there is any ODataProcessorAttribute loop though and read value base on attr.
+                            object value = r[c.Caption];
+                            p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnReadValue(value); });
+
+                            //Loop though converters that can convert on this property and set the value.
+                            ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { value = c.OnConvertFrom(p, value, (IDataObject)result); });
+
+                            p.SetValue(result, value, null);
+
                         }
                         else
                         {
@@ -1982,9 +2039,18 @@ namespace K2host.Data.Classes
 
                             string columnName = c.Caption.Remove(0, c.Caption.IndexOf(".") + 1);
 
-                            result.GetType().GetProperty(columnName).DeclaringType
-                                .GetProperty(columnName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                                .SetValue(result, r[c.Caption], null);
+                            PropertyInfo p = result.GetType()
+                            .GetProperty(columnName).DeclaringType
+                            .GetProperty(columnName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                           
+                            //if there is any ODataProcessorAttribute loop though and read value base on attr.
+                            object value = r[c.Caption];
+                            p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnReadValue(value); });
+
+                            //Loop though converters that can convert on this property and set the value.
+                            ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { value = c.OnConvertFrom(p, value, (IDataObject)result); });
+
+                            p.SetValue(result, value, null);
 
                         });
 
@@ -2006,9 +2072,18 @@ namespace K2host.Data.Classes
                                     {
                                         string cname = c.Caption.Remove(0, c.Caption.IndexOf(".") + 1);
 
-                                        instance.GetType().GetProperty(cname).DeclaringType
-                                            .GetProperty(cname, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                                            .SetValue(instance, r[c.Caption], null);
+                                        PropertyInfo p = instance.GetType()
+                                        .GetProperty(cname).DeclaringType
+                                        .GetProperty(cname, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+        
+                                        //if there is any ODataProcessorAttribute loop though and read value base on attr.
+                                        object value = r[c.Caption];
+                                        p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnReadValue(value); });
+
+                                        //Loop though converters that can convert on this property and set the value.
+                                        ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { value = c.OnConvertFrom(p, value, (IDataObject)result); });
+
+                                        p.SetValue(instance, value, null);
 
                                     });
 
@@ -2037,8 +2112,6 @@ namespace K2host.Data.Classes
             {
                 throw new ODataException("K2host.Data." + typeof(I).Name + ".Retrieve():", ex);
             }
-
-
 
         }
 
@@ -2101,27 +2174,29 @@ namespace K2host.Data.Classes
 
             StringBuilder output = new();
 
+            var tnm = obj.GetTypeInfo().GetMappedName();
+
             output.Append("USE [" + DatabaseName + "]" + Environment.NewLine);
             output.Append(";SET ANSI_NULLS ON" + Environment.NewLine);
             output.Append(";SET QUOTED_IDENTIFIER ON" + Environment.NewLine);
-            output.Append(";CREATE TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "](" + Environment.NewLine);
+            output.Append(";CREATE TABLE [dbo].[tbl_" + tnm + "](" + Environment.NewLine);
             output.Append("    [Uid] BIGINT IDENTITY(1,1) NOT NULL," + Environment.NewLine);
             output.Append("    [ParentId] BIGINT NULL," + Environment.NewLine);
             output.Append("    [ParentType] NVARCHAR(255) NULL," + Environment.NewLine);
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => p.GetCustomAttribute(typeof(TSQLDataType), true) != null && !ignore.Contains(p.Name))
+                .Where(p => p.GetCustomAttribute(typeof(ODataTypeAttribute), true) != null && !ignore.Contains(p.Name))
                 .ToArray()
                 .Each(p => {
-                    output.Append("    [" + p.Name + "] " + ((TSQLDataType)p.GetCustomAttributes(true)[0]).ToString() + " NULL," + Environment.NewLine);
+                    output.Append("    [" + p.Name + "] " + ((ODataTypeAttribute)p.GetCustomAttributes(true)[0]).ToString() + " NULL," + Environment.NewLine);
                     return true;
                 });
 
             output.Append("    [Flags] BIGINT NULL," + Environment.NewLine);
             output.Append("    [Updated] DATETIME NULL," + Environment.NewLine);
             output.Append("    [Datestamp] DATETIME NULL," + Environment.NewLine);
-            output.Append(" CONSTRAINT [PK_" + obj.GetTypeInfo().Name + "] PRIMARY KEY CLUSTERED " + Environment.NewLine);
+            output.Append(" CONSTRAINT [PK_" + tnm + "] PRIMARY KEY CLUSTERED " + Environment.NewLine);
             output.Append("(" + Environment.NewLine);
             output.Append("	[Uid] ASC" + Environment.NewLine);
             output.Append(")WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]" + Environment.NewLine);
@@ -2131,21 +2206,21 @@ namespace K2host.Data.Classes
                 output.Append("TEXTIMAGE_ON [PRIMARY]");
 
             output.Append(Environment.NewLine);
-            output.Append(";ALTER TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_ParentId]  DEFAULT ((0)) FOR [ParentId]" + Environment.NewLine);
-            output.Append(";ALTER TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_ParentType]  DEFAULT ('') FOR [ParentType]" + Environment.NewLine);
+            output.Append(";ALTER TABLE [dbo].[tbl_" + tnm + "] ADD  CONSTRAINT [DF_" + tnm + "_ParentId]  DEFAULT ((0)) FOR [ParentId]" + Environment.NewLine);
+            output.Append(";ALTER TABLE [dbo].[tbl_" + tnm + "] ADD  CONSTRAINT [DF_" + tnm + "_ParentType]  DEFAULT ('') FOR [ParentType]" + Environment.NewLine);
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => p.GetCustomAttribute(typeof(TSQLDataType), true) != null && !ignore.Contains(p.Name))
+                .Where(p => p.GetCustomAttribute(typeof(ODataTypeAttribute), true) != null && !ignore.Contains(p.Name))
                 .ToArray()
                 .Each(p => {
-                    output.Append(";ALTER TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_" + p.Name + "]  DEFAULT ((" + gd.GetSqlDefaultValueRepresentation(gd.GetSqlDbType(p.PropertyType)) + ")) FOR [" + p.Name + "]" + Environment.NewLine);
+                    output.Append(";ALTER TABLE [dbo].[tbl_" + tnm + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_" + p.Name + "]  DEFAULT ((" + gd.GetSqlDefaultValueRepresentation(gd.GetSqlDbType(p.PropertyType)) + ")) FOR [" + p.Name + "]" + Environment.NewLine);
                     return true;
                 });
 
-            output.Append(";ALTER TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_Flags]  DEFAULT ((0)) FOR [Flags]" + Environment.NewLine);
-            output.Append(";ALTER TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_Updated]  DEFAULT (getdate()) FOR [Updated]" + Environment.NewLine);
-            output.Append(";ALTER TABLE [dbo].[tbl_" + obj.GetTypeInfo().Name + "] ADD  CONSTRAINT [DF_" + obj.GetTypeInfo().Name + "_Datestamp]  DEFAULT (getdate()) FOR [Datestamp]" + Environment.NewLine);
+            output.Append(";ALTER TABLE [dbo].[tbl_" + tnm + "] ADD  CONSTRAINT [DF_" + tnm + "_Flags]  DEFAULT ((0)) FOR [Flags]" + Environment.NewLine);
+            output.Append(";ALTER TABLE [dbo].[tbl_" + tnm + "] ADD  CONSTRAINT [DF_" + tnm + "_Updated]  DEFAULT (getdate()) FOR [Updated]" + Environment.NewLine);
+            output.Append(";ALTER TABLE [dbo].[tbl_" + tnm + "] ADD  CONSTRAINT [DF_" + tnm + "_Datestamp]  DEFAULT (getdate()) FOR [Datestamp]" + Environment.NewLine);
 
             return output.ToString();
 
@@ -2163,17 +2238,19 @@ namespace K2host.Data.Classes
 
             StringBuilder output = new();
 
-            output.Append("CREATE PROCEDURE [dbo].[spr_" + obj.GetTypeInfo().Name + "]" + Environment.NewLine);
+            var tnm = obj.GetTypeInfo().GetMappedName();
+
+            output.Append("CREATE PROCEDURE [dbo].[spr_" + tnm + "]" + Environment.NewLine);
             output.Append(" @Uid BIGINT = 0" + Environment.NewLine);
             output.Append(",@ParentId BIGINT = 0" + Environment.NewLine);
             output.Append(",@ParentType NVARCHAR(255) = ''" + Environment.NewLine);
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => p.GetCustomAttribute(typeof(TSQLDataType), true) != null && !ignore.Contains(p.Name))
+                .Where(p => p.GetCustomAttribute(typeof(ODataTypeAttribute), true) != null && !ignore.Contains(p.Name))
                 .ToArray()
                 .Each(p => {
-                    output.Append(",@" + p.Name + " " + ((TSQLDataType)p.GetCustomAttributes(true)[0]).ToString() + Environment.NewLine);
+                    output.Append(",@" + p.Name + " " + ((ODataTypeAttribute)p.GetCustomAttributes(true)[0]).ToString() + Environment.NewLine);
                     return true;
                 });
 
@@ -2188,7 +2265,7 @@ namespace K2host.Data.Classes
             output.Append(Environment.NewLine);
             output.Append("        IF (@Flags = -2) BEGIN -- delete" + Environment.NewLine);
             output.Append(Environment.NewLine);
-            output.Append("            DELETE FROM tbl_" + obj.GetTypeInfo().Name + " WHERE [Uid] = @Uid;" + Environment.NewLine);
+            output.Append("            DELETE FROM tbl_" + tnm + " WHERE [Uid] = @Uid;" + Environment.NewLine);
             output.Append("            SELECT @Uid;" + Environment.NewLine);
             output.Append(Environment.NewLine);
             output.Append("        END ELSE IF (@Flags = -1) BEGIN -- select" + Environment.NewLine);
@@ -2200,7 +2277,7 @@ namespace K2host.Data.Classes
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => p.GetCustomAttribute(typeof(TSQLDataType), true) != null && !ignore.Contains(p.Name))
+                .Where(p => p.GetCustomAttribute(typeof(ODataTypeAttribute), true) != null && !ignore.Contains(p.Name))
                 .ToArray()
                 .Each(p => {
                     output.Append("            ,[" + p.Name + "]" + Environment.NewLine);
@@ -2210,15 +2287,15 @@ namespace K2host.Data.Classes
             output.Append("            ,[Flags]" + Environment.NewLine);
             output.Append("            ,[Updated]" + Environment.NewLine);
             output.Append("            ,[Datestamp]" + Environment.NewLine);
-            output.Append("            FROM tbl_" + obj.GetTypeInfo().Name + " WHERE [Uid] = @Uid;" + Environment.NewLine);
+            output.Append("            FROM tbl_" + tnm + " WHERE [Uid] = @Uid;" + Environment.NewLine);
             output.Append(Environment.NewLine);
             output.Append("        END ELSE BEGIN -- update" + Environment.NewLine);
             output.Append(Environment.NewLine);
-            output.Append("            UPDATE tbl_" + obj.GetTypeInfo().Name + " SET " + Environment.NewLine);
+            output.Append("            UPDATE tbl_" + tnm + " SET " + Environment.NewLine);
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => (p.GetCustomAttribute<TSQLDataType>(true) != null && !ignore.Contains(p.Name)) && (p.GetCustomAttribute<TSQLDataException>(true) == null || p.GetCustomAttribute<TSQLDataException>(true) != null && !p.GetCustomAttribute<TSQLDataException>(true).ODataExceptionType.HasFlag(ODataExceptionType.NON_UPDATE)))
+                .Where(p => (p.GetCustomAttribute<ODataTypeAttribute>(true) != null && !ignore.Contains(p.Name)) && (p.GetCustomAttribute<ODataExceptionAttribute>(true) == null || p.GetCustomAttribute<ODataExceptionAttribute>(true) != null && !p.GetCustomAttribute<ODataExceptionAttribute>(true).ODataExceptionType.HasFlag(ODataExceptionType.NON_UPDATE)))
                 .ToArray()
                 .Each(p => {
                     output.Append("            [" + p.Name + "] = @" + p.Name + "," + Environment.NewLine);
@@ -2237,11 +2314,11 @@ namespace K2host.Data.Classes
             output.Append(Environment.NewLine);
             output.Append("    END ELSE BEGIN -- insert" + Environment.NewLine);
             output.Append(Environment.NewLine);
-            output.Append("        INSERT INTO tbl_" + obj.GetTypeInfo().Name + " (" + Environment.NewLine);
+            output.Append("        INSERT INTO tbl_" + tnm + " (" + Environment.NewLine);
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => (p.GetCustomAttribute<TSQLDataType>(true) != null && !ignore.Contains(p.Name)) && (p.GetCustomAttribute<TSQLDataException>(true) == null || p.GetCustomAttribute<TSQLDataException>(true) != null && !p.GetCustomAttribute<TSQLDataException>(true).ODataExceptionType.HasFlag(ODataExceptionType.NON_INSERT)))
+                .Where(p => (p.GetCustomAttribute<ODataTypeAttribute>(true) != null && !ignore.Contains(p.Name)) && (p.GetCustomAttribute<ODataExceptionAttribute>(true) == null || p.GetCustomAttribute<ODataExceptionAttribute>(true) != null && !p.GetCustomAttribute<ODataExceptionAttribute>(true).ODataExceptionType.HasFlag(ODataExceptionType.NON_INSERT)))
                 .ToArray()
                 .Each(p => {
                     output.Append("            [" + p.Name + "]," + Environment.NewLine);
@@ -2257,7 +2334,7 @@ namespace K2host.Data.Classes
 
             obj.GetTypeInfo()
                 .GetProperties()
-                .Where(p => (p.GetCustomAttribute<TSQLDataType>(true) != null && !ignore.Contains(p.Name)) && (p.GetCustomAttribute<TSQLDataException>(true) == null || p.GetCustomAttribute<TSQLDataException>(true) != null && !p.GetCustomAttribute<TSQLDataException>(true).ODataExceptionType.HasFlag(ODataExceptionType.NON_INSERT)))
+                .Where(p => (p.GetCustomAttribute<ODataTypeAttribute>(true) != null && !ignore.Contains(p.Name)) && (p.GetCustomAttribute<ODataExceptionAttribute>(true) == null || p.GetCustomAttribute<ODataExceptionAttribute>(true) != null && !p.GetCustomAttribute<ODataExceptionAttribute>(true).ODataExceptionType.HasFlag(ODataExceptionType.NON_INSERT)))
                 .ToArray()
                 .Each(p => {
                     output.Append("            @" + p.Name + "," + Environment.NewLine);
@@ -2270,7 +2347,7 @@ namespace K2host.Data.Classes
             output.Append("            @Updated," + Environment.NewLine);
             output.Append("            @Datestamp" + Environment.NewLine);
             output.Append("        )" + Environment.NewLine);
-            output.Append("        SELECT [Uid] FROM tbl_" + obj.GetTypeInfo().Name + " WHERE [Uid] = SCOPE_IDENTITY();" + Environment.NewLine);
+            output.Append("        SELECT [Uid] FROM tbl_" + tnm + " WHERE [Uid] = SCOPE_IDENTITY();" + Environment.NewLine);
             output.Append(Environment.NewLine);
             output.Append("    END" + Environment.NewLine);
             output.Append(Environment.NewLine);
@@ -2286,7 +2363,7 @@ namespace K2host.Data.Classes
         /// <returns></returns>
         public static string DropDatabaseTable(Type obj)
         {
-            return "DROP TABLE IF EXISTS tbl_" + obj.GetTypeInfo().Name;
+            return "DROP TABLE IF EXISTS tbl_" + obj.GetTypeInfo().GetMappedName();
         }
 
         /// <summary>
@@ -2296,7 +2373,7 @@ namespace K2host.Data.Classes
         /// <returns></returns>
         public static string DropDatabaseStoredProc(Type obj)
         {
-            return "DROP PROCEDURE IF EXISTS spr_" + obj.GetTypeInfo().Name;
+            return "DROP PROCEDURE IF EXISTS spr_" + obj.GetTypeInfo().GetMappedName();
         }
 
         /// <summary>
@@ -2326,7 +2403,7 @@ namespace K2host.Data.Classes
         /// <returns></returns>
         public static string TruncateDatabaseTable(Type obj)
         {
-            return "TRUNCATE TABLE tbl_" + obj.GetTypeInfo().Name;
+            return "TRUNCATE TABLE tbl_" + obj.GetTypeInfo().GetMappedName();
         }
 
         /// <summary>

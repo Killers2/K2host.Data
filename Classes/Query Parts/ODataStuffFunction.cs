@@ -14,40 +14,52 @@ namespace K2host.Data.Classes
     /// <summary>
     /// This class help the user create where cases on the ODataObject
     /// </summary>
-    public class ODataTakeSkip : IDisposable
+    public class ODataStuffFunction : IDisposable
     {
 
         /// <summary>
-        /// The amount of records to take from a list for pagination
+        /// The query wrapped in the apply type, which would have the linking within.
         /// </summary>
-        public int Take { get; set; }
+        public ODataSelectQuery Query { get; set; }
 
         /// <summary>
-        /// The amount of records to skip from a list for pagination
+        /// The Stuff function start posistion
         /// </summary>
-        public int Skip { get; set; }
+        public int StartPosistion { get; set; }
+
+        /// <summary>
+        /// The Stuff function No. of chars
+        /// </summary>
+        public int NumberOfChars { get; set; }
+
+        /// <summary>
+        /// The replacement expression
+        /// </summary>
+        public string ReplacementExpression { get; set; }
 
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataTakeSkip() 
+        public ODataStuffFunction() 
         {
-
-            Take = 0;
-            Skip = 0;
+            Query                   = null;
+            StartPosistion          = 0;
+            NumberOfChars           = 0;
+            ReplacementExpression   = string.Empty;
         }
 
         /// <summary>
-        /// This returns and builds the string representation of the take and skip segment.
+        /// This returns and builds the string representation of the case segment.
         /// </summary>
         /// <returns></returns>
         public override string ToString() 
         {
 
-            StringBuilder output = new StringBuilder();
+            StringBuilder output = new();
 
-            output.Append("OFFSET " + Skip.ToString() + " ROWS ");
-            output.Append("FETCH NEXT " + Take.ToString() + " ROWS ONLY");
+            output.Append(" STUFF((");
+            output.Append(Query.ToString());
+            output.Append("), " + StartPosistion.ToString() + ", " + NumberOfChars.ToString() + ", '" + ReplacementExpression + "')");
 
             return output.ToString();
 

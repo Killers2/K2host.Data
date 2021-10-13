@@ -187,7 +187,7 @@ namespace K2host.Data.Classes
             {
 
                 if (UseFieldPrefixing)
-                    output.Append(Column.ReflectedType.Name + ".");
+                    output.Append(Column.ReflectedType.GetMappedName() + ".");
 
                 output.Append("[" + Column.Name + "]");
                
@@ -201,7 +201,7 @@ namespace K2host.Data.Classes
                     output.Append(") ");
                
                 if (UseFieldDefaultAlias)
-                    output.Append(" AS [" + Column.ReflectedType.Name + "." + Column.Name + "]");
+                    output.Append(" AS [" + Column.ReflectedType.GetMappedName() + "." + Column.Name + "]");
 
                 if (!UseFieldDefaultAlias && !string.IsNullOrEmpty(Alias))
                     output.Append(" AS [" + Alias + "]");

@@ -88,7 +88,8 @@ namespace K2host.Data.Classes
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataPropertyInfo(string name, Type propertyType, Type declaringType, Type reflectedType) : base ()
+        public ODataPropertyInfo(string name, Type propertyType, Type declaringType, Type reflectedType) 
+            : base ()
         {
             Name            = name;
             PropertyType    = propertyType;
@@ -99,7 +100,8 @@ namespace K2host.Data.Classes
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataPropertyInfo(string name, Type propertyType) : base()
+        public ODataPropertyInfo(string name, Type propertyType) 
+            : base()
         {
             Name = name;
             PropertyType = propertyType;
@@ -110,7 +112,8 @@ namespace K2host.Data.Classes
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataPropertyInfo(string name) : base()
+        public ODataPropertyInfo(string name) 
+            : base()
         {
             Name = name;
             PropertyType = typeof(String);

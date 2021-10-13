@@ -6,22 +6,19 @@
 ' \====================================================/
 */
 using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using K2host.Data.Attributes;
-using K2host.Data.Classes;
 using K2host.Data.Interfaces;
 
-namespace K2host.Data.Delegates
+namespace K2host.Data.Classes
 {
+    public static class ODataContext
+    {
 
-    public delegate void OTriggeredEventHandler(IDataTriggerRequest e);
+        public static List<IDataPropertyConverter> PropertyConverters { get; } = new();
 
-    public delegate IEnumerable<Type> OnGetDbContext();
-
-    public delegate void OnGetDbContextCustom(OConnection DbConnection);
-
-    public delegate object OnConvertEvent(object value, ODataTypeAttribute attribute);
-
-
+    }
 }

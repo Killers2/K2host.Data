@@ -106,9 +106,11 @@ namespace K2host.Data.Classes
                     return true;
                 });
 
-                string[] TablesToRemove = Connection.GetTables().Filter(t => {
-                    return !DbContext.Where(c => c.Name == t.Remove(0, 4)).Any();
-                });
+                string[] TablesToRemove = Connection
+                    .GetTables()
+                    .Filter(t => {
+                        return !DbContext.Where(c => c.GetMappedName() == t.Remove(0, 4)).Any();
+                    });
 
                 TablesToRemove.ForEach(t => {
                     gd.Query(ODataObject<object>.DropDatabaseTable(t.Remove(0, 4)), ConnectionString);

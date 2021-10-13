@@ -57,8 +57,8 @@ namespace K2host.Data.Classes
         public string ToString(string prefix = "") 
         {
 
-            StringBuilder output = new StringBuilder();
-
+            StringBuilder output = new();
+            
             if (Random)
                 output.Append("NEWID()");
             else
@@ -69,7 +69,7 @@ namespace K2host.Data.Classes
                 output.Append(prefix + Column.Name);
 
                 if (Function != ODataFunction.NONE)
-                    output.Append(")");
+                    output.Append(')');
 
                 switch (Order)
                 {

@@ -74,7 +74,7 @@ namespace K2host.Data.Classes
                 output.Append(Function.ToString() + "(");
 
             if (UseFieldPrefixing)
-                output.Append(Column.ReflectedType.Name + ".");
+                output.Append(Column.ReflectedType.GetMappedName() + ".");
 
             output.Append("[" + Column.Name + "]");
 
@@ -134,7 +134,7 @@ namespace K2host.Data.Classes
             }
 
             if (Value.GetType().Name == "RuntimePropertyInfo")
-                output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((PropertyInfo)Value).ReflectedType.Name + ".[" + ((PropertyInfo)Value).Name) + "]");
+                output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((PropertyInfo)Value).ReflectedType.GetMappedName() + ".[" + ((PropertyInfo)Value).Name) + "]");
             else
                 output.Append(gd.GetSqlRepresentation(Column, Value));
 

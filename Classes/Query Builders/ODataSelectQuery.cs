@@ -6,9 +6,11 @@
 ' \====================================================/
 */
 using System;
+using System.Reflection;
 using System.Text;
 
 using K2host.Core;
+using K2host.Data.Attributes;
 using K2host.Data.Enums;
 using K2host.Data.Interfaces;
 
@@ -191,32 +193,40 @@ namespace K2host.Data.Classes
                 if (From != null)
                 {
 
-                    output.Append(" FROM tbl_" + From.Name + " " + From.Name);
+                    var FromTableName = From.GetMappedName();
+                    output.Append(" FROM tbl_" + FromTableName + " " + FromTableName);
 
                     if (Joins != null)
                         Joins.ForEach(j =>
                         {
+
                             if (j.Join != null && j.JoinQuery == null)
-                                output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN tbl_" + j.Join.Name + " " + j.Join.Name + " ON ");
+                            {
+                                var JoinTableName = j.Join.GetMappedName();
+                                output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN tbl_" + JoinTableName + " " + JoinTableName + " ON ");
+                            }
 
                             if (j.Join == null && j.JoinQuery != null)
-                                output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN ( " + j.JoinQuery.ToString() + " ) " + j.JoinQuery.From.Name + " ON ");
+                                output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN ( " + j.JoinQuery.ToString() + " ) " + j.JoinQuery.From.GetMappedName() + " ON ");
 
                             if (j.JoinConditions != null && j.JoinConditions.Length > 0)
                             {
-                                j.JoinConditions.ForEach(condition =>
-                                {
+                                j.JoinConditions.ForEach(condition => {
                                     output.Append(condition.ToString(true));
                                 });
                             }
                             else
                             {
-
+                                var JoinTableName = string.Empty;
+                                
                                 if (j.Join != null && j.JoinQuery == null)
-                                    output.Append(j.Join.Name + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.Name + ".[" + j.JoinEqualsField.Name + "]");
-
+                                    JoinTableName = j.Join.GetMappedName();
+                                
                                 if (j.Join == null && j.JoinQuery != null)
-                                    output.Append(j.JoinQuery.From.Name + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.Name + ".[" + j.JoinEqualsField.Name + "]");
+                                    JoinTableName = j.JoinQuery.From.GetMappedName();
+
+                                output.Append(JoinTableName + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.GetMappedName() + ".[" + j.JoinEqualsField.Name + "]");
+
                             }
 
                         });
@@ -231,7 +241,7 @@ namespace K2host.Data.Classes
                     output.Append(" WHERE ");
                 
                     if (!IncludeRemoved)
-                        output.Append("(" + From.Name + ".[Flags] >= 0) AND (" + From.Name + ".[Flags] & " + ((long)ODataFlags.Deleted).ToString() + ") != " + ((long)ODataFlags.Deleted).ToString() + " ");
+                        output.Append("(" + FromTableName + ".[Flags] >= 0) AND (" + FromTableName + ".[Flags] & " + ((long)ODataFlags.Deleted).ToString() + ") != " + ((long)ODataFlags.Deleted).ToString() + " ");
 
                     if (Where != null && !IncludeRemoved)
                         output.Append(" AND ");
@@ -256,7 +266,7 @@ namespace K2host.Data.Classes
                     if (Order != null)
                     {
                         output.Append(" ORDER BY ");
-                        Order.ForEach(o => { output.Append(o.ToString((Joins != null || Applies != null || UseFieldPrefixing) ? o.Column.ReflectedType.Name + "." : string.Empty) + ", "); });
+                        Order.ForEach(o => { output.Append(o.ToString((Joins != null || Applies != null || UseFieldPrefixing) ? o.Column.ReflectedType.GetMappedName() + "." : string.Empty) + ", "); });
                         output.Remove(output.Length - 2, 2);
                     }
 

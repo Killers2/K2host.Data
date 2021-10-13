@@ -7,7 +7,7 @@
 */
 using System;
 using System.Data;
-
+using K2host.Data.Attributes;
 using K2host.Data.Interfaces;
 
 namespace K2host.Data.Classes
@@ -21,31 +21,31 @@ namespace K2host.Data.Classes
         /// <summary>
         /// The string type of which its either MS SQL Server or Agent
         /// </summary>
-        [TSQLDataType(SqlDbType.NVarChar, 255)]
+        [ODataType(SqlDbType.NVarChar, 255)]
         public string Type { get; set; }
 
         /// <summary>
         /// The Connection string / sources to the database servers.
         /// </summary>
-        [TSQLDataType(SqlDbType.NVarChar, -1)]
+        [ODataType(SqlDbType.NVarChar, -1)]
         public string Connection { get; set; }
 
         /// <summary>
         /// This is to determin weather the Uninstall process removes the setup or and uninstall locally.
         /// </summary>
-        [TSQLDataType(SqlDbType.Bit)]
+        [ODataType(SqlDbType.Bit)]
         public bool IsLocal { get; set; }
 
         /// <summary>
         /// This is to authenticate transactions / triggers from database servers.
         /// </summary>
-        [TSQLDataType(SqlDbType.NVarChar, 1024)]
+        [ODataType(SqlDbType.NVarChar, 1024)]
         public string AuthenticationKey { get; set; }
 
         /// <summary>
         /// This will either by the setup <see cref="IDataTrigger"/> or a Json string form from an Agent install
         /// </summary>
-        [TSQLDataType(SqlDbType.VarBinary, -1)]
+        [ODataType(SqlDbType.VarBinary, -1)]
         public byte[] Configuration { get; set; }
 
         /// <summary>

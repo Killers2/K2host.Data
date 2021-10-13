@@ -32,6 +32,7 @@ using ExcelDataReader;
 using K2host.Core;
 using K2host.Data.Enums;
 using K2host.Data.Classes;
+using K2host.Data.Attributes;
 
 namespace K2host.Data
 {
@@ -856,9 +857,9 @@ namespace K2host.Data
             };
 
             foreach (PropertyInfo p in obj.GetProperties())
-                if (p.GetCustomAttributes(typeof(TSQLDataException), true).Length > 0)
+                if (p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length > 0)
                 {
-                    if (!((TSQLDataException)p.GetCustomAttributes(typeof(TSQLDataException), true)[0]).ODataExceptionType.HasFlag(NonInteract))
+                    if (!((ODataExceptionAttribute)p.GetCustomAttributes(typeof(ODataExceptionAttribute), true)[0]).ODataExceptionType.HasFlag(NonInteract))
                         output.Add(
                             new ODataFieldSet()
                             {
@@ -1495,6 +1496,12 @@ namespace K2host.Data
                 if (p == null)
                     output.Append(value.ToString());
                 else
+                {
+
+                    p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnWriteValue(value); });
+
+                    ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { value = c.OnConvertTo(p, value, null); });
+
                     switch (p.PropertyType.Name)
                     {
                         case "String":
@@ -1519,7 +1526,7 @@ namespace K2host.Data
                                 output.Append(value.ToString());
                             break;
                     }
-
+                }
             }
 
             return output.ToString();
@@ -2594,6 +2601,24 @@ namespace K2host.Data
             sql.AppendFormat("\n);\n{0}", alterSql.ToString());
 
             return sql.ToString();
+        }
+
+        public static string GetMappedName(this Type e) 
+        {
+            var tnm = e.Name;
+            var map = e.GetCustomAttribute<ODataReMapAttribute>();
+            if (map != null)
+                tnm = map.ModelName;
+            return tnm;
+        }
+       
+        public static string GetMappedName(this TypeInfo e)
+        {
+            var tnm = e.Name;
+            var map = e.GetCustomAttribute<ODataReMapAttribute>();
+            if (map != null)
+                tnm = map.ModelName;
+            return tnm;
         }
 
         #endregion

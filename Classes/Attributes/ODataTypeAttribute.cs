@@ -6,15 +6,17 @@
 ' \====================================================/
 */
 
+using System;
 using System.Data;
-using System.ComponentModel;
 
-namespace K2host.Data.Classes
+using K2host.Data.Interfaces;
+
+namespace K2host.Data.Attributes
 {
     /// <summary>
     /// Used on properties as a attribute for defining links to a data source.
     /// </summary>
-    public class TSQLDataType : DescriptionAttribute
+    public class ODataTypeAttribute : ODataAttribute
     {
 
         readonly SqlDbType      MsSqlType;
@@ -32,7 +34,7 @@ namespace K2host.Data.Classes
         /// Creates the attribute on a property to define an data source link
         /// </summary>
         /// <param name="typeName">Sql datatype name</param>
-        public TSQLDataType(string typeName) : base(string.Empty)
+        public ODataTypeAttribute(string typeName)
         {
             StrType     = typeName;
             TypeSize    = 0;
@@ -45,7 +47,7 @@ namespace K2host.Data.Classes
         /// <param name="typeName">Sqls data type.</param>
         /// <param name="size">Using size as -1 will invoke the max in the field, this is also used as a format provider for some types like TIME(0)</param>
         /// <param name="places">Decimal places in a number field</param>
-        public TSQLDataType(SqlDbType typeName, int size = 0, int places = 0) : base(string.Empty)
+        public ODataTypeAttribute(SqlDbType typeName, int size = 0, int places = 0)
         {
             MsSqlType       = typeName;
             TypeSize        = size;

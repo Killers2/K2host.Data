@@ -76,7 +76,9 @@ namespace K2host.Data.Classes
 
             StringBuilder output = new();
 
-            output.Append("UPDATE tbl_" + From.Name + " SET ");
+            var FromTableName = From.GetMappedName();
+
+            output.Append("UPDATE tbl_" + FromTableName + " SET ");
 
             if (Fields != null)
                 Fields.ForEach(f => { output.Append(f.ToUpdateString() + ", "); });
@@ -86,10 +88,13 @@ namespace K2host.Data.Classes
             if (Joins != null || Applies != null)
             {
 
-                output.Append(" FROM tbl_" + From.Name + " ");
+                output.Append(" FROM tbl_" + FromTableName + " ");
 
                 if (Joins != null)
-                    Joins.ForEach(j => { output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN tbl_" + j.Join.Name + " " + j.Join.Name + " ON " + j.Join.Name + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.Name + ".[" + j.JoinEqualsField.Name + "]"); });
+                    Joins.ForEach(j => {
+                        var JoinTableName = j.Join.GetMappedName();
+                        output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN tbl_" + JoinTableName + " " + JoinTableName + " ON " + JoinTableName + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.GetMappedName() + ".[" + j.JoinEqualsField.Name + "]"); 
+                    });
 
                 if (Applies != null)
                     Applies.ForEach(a => { output.Append(" " + a.ToString()); });

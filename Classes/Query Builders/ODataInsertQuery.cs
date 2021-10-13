@@ -69,30 +69,32 @@ namespace K2host.Data.Classes
         public override string ToString() 
         {
 
-            StringBuilder output = new StringBuilder();
-           
-            if (UseIdentityInsert)
-                output.Append("SET IDENTITY_INSERT tbl_" + To.Name + " ON;");
+            StringBuilder output = new();
 
-            output.Append("INSERT INTO tbl_" + To.Name + " ( ");
+            var ToTableName = To.GetMappedName();
+
+            if (UseIdentityInsert)
+                output.Append("SET IDENTITY_INSERT tbl_" + ToTableName + " ON;");
+
+            output.Append("INSERT INTO tbl_" + ToTableName + " ( ");
 
             Fields.ForEach(f => { output.Append(f.ToInsertString() + ", "); });
 
             output.Remove(output.Length - 2, 2);
 
-            output.Append(")");
+            output.Append(')');
 
             if (ValueSets.Count <= 0 && Select == null) {
                 output.Append(" VALUES (");
                 Fields.ForEach(field => { output.Append(field.NewValue + ", "); });
                 output.Remove(output.Length - 2, 2);
-                output.Append(")");
+                output.Append(')');
             }
 
             if (ValueSets.Count > 0 && Select == null) {
                 output.Append(" VALUES ");
                 ValueSets.ForEach(values => {
-                    output.Append("(");
+                    output.Append('(');
                     values.ForEach(field => { output.Append(field.NewValue + ", "); });
                     output.Remove(output.Length - 2, 2);
                     output.Append("), ");
@@ -105,7 +107,7 @@ namespace K2host.Data.Classes
 
 
             if (UseIdentityInsert)
-                output.Append("SET IDENTITY_INSERT tbl_" + To.Name + " OFF;");
+                output.Append("SET IDENTITY_INSERT tbl_" + ToTableName + " OFF;");
 
             return output.ToString();
 

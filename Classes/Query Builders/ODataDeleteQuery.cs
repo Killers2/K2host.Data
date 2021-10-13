@@ -8,7 +8,8 @@
 using System;
 using System.Text;
 
-using K2host.Data.Enums;
+using K2host.Core;
+using K2host.Data.Interfaces;
 
 namespace K2host.Data.Classes
 {
@@ -16,49 +17,45 @@ namespace K2host.Data.Classes
     /// <summary>
     /// This class help the user create where cases on the ODataObject
     /// </summary>
-    public class ODataApplySet : IDisposable
+    public class ODataDeleteQuery : IDataQuery
     {
-
+     
         /// <summary>
-        /// The type of apply used for this query
+        /// The object you are selecting from mapped in the database (table name).
         /// </summary>
-        public ODataApplyType ApplyType { get; set; }
-
+        public Type From { get; set; }
+        
         /// <summary>
-        /// The query wrapped in the apply type, which would have the linking within.
+        /// Optional: The condition list based on the the when is question
         /// </summary>
-        public ODataSelectQuery Query { get; set; }
-
-        /// <summary>
-        /// The apply alias for the main query
-        /// </summary>
-        public string Alias { get; set; }
+        public ODataCondition[] Where { get; set; }
 
         /// <summary>
         /// This creates the instance of the class.
         /// </summary>
-        public ODataApplySet() 
+        public ODataDeleteQuery() 
         {
-
-            ApplyType   = ODataApplyType.CROSS;
-            Query       = null;
-            Alias       = string.Empty;
+            From    = null;
+            Where   = null;
         }
 
         /// <summary>
-        /// This returns and builds the string representation of the case segment.
+        /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
         public override string ToString() 
         {
 
-            StringBuilder output = new StringBuilder();
+            StringBuilder output = new();
 
-            output.Append(ApplyType.ToString() + " APPLY (");
+            output.Append("DELETE FROM tbl_" + From.GetMappedName());
 
-            output.Append(Query.ToString());
-
-            output.Append(") " + Alias + " ");
+            if (Where != null) {
+                output.Append(" WHERE ");
+                Where.ForEach(condition => { 
+                    output.Append(condition.ToString(false)); 
+                });
+            }
 
             return output.ToString();
 

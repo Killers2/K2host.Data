@@ -172,7 +172,7 @@ namespace K2host.Data.Classes
                     else
                     {
                         if (UsePrefix)
-                            output.Append(Column.ReflectedType.Name + ".[" + Column.Name + "]");
+                            output.Append(Column.ReflectedType.GetMappedName() + ".[" + Column.Name + "]");
                         else
                             output.Append("[" + Column.Name + "]");
                     }
@@ -273,7 +273,7 @@ namespace K2host.Data.Classes
                         else
                         {
                             if (v.GetType().Name == "RuntimePropertyInfo")
-                                output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((PropertyInfo)v).ReflectedType.Name + ".[" + ((PropertyInfo)v).Name) + "],");
+                                output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((PropertyInfo)v).ReflectedType.GetMappedName() + ".[" + ((PropertyInfo)v).Name) + "],");
                             else if (v.GetType().Name == "ODataPropertyInfo")
                                 output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((ODataPropertyInfo)v).Name) + ",");
                             else
