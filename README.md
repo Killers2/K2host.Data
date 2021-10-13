@@ -75,8 +75,11 @@ public class OErpUser : ErpObject<OErpUser>, IErpUser
 
 }
 ```
-Every model you create will always need the connection string to your database passed from some other instance or / and variable.<br /><br />
-We can also add some attributes, this first one is for remapping the object to the database, for example:
+Every model you create will always need the connection string to your database passed from some other instance or / and variable.
+
+# Type Attribute.
+
+We can add some attributes, this first one is for remapping the object to the database, for example:
 
 ```c#
 [ODataReMap("OErpUser")]
@@ -97,6 +100,9 @@ public class TErpUser : ErpObject<TErpUser>, IErpUser
 
 }
 ```
+
+# Property Attributes.
+
 However we can also create and add property attributes.
 
 ```c#
@@ -117,8 +123,132 @@ public class TErpUser : ErpObject<TErpUser>, IErpUser
 ```
 Where the ODataEncryption attribute will deal with changing the value of the property when reading and writing to database to model.<br />
 We can also set the order for the attribute if there are more than one assigned.
+<br /><br />
 
+For creating your own Property attribute you can use the below to help override the functions to do the work:
 
+```c#
+public abstract class ODataPropertyAttribute : Attribute, IDataOrderAttribute, IDataReadProcessAttribute, IDataWriteProcessAttribute
+{
+
+    public virtual int Order { get; private set; }
+
+    public ODataPropertyAttribute(int order)
+    {
+        Order = order;
+    }
+
+    public virtual T OnWriteValue<T>(T data)
+    {
+        //Not implemented here.
+        return default;
+    }
+
+    public virtual T OnReadValue<T>(T data)
+    {
+        //Not implemented here.
+        return default;
+    }
+
+}
+```
+
+# Property Converters.
+
+For creating your own property converter you can use the below to help override the functions to do the work:
+
+```c#
+public abstract class ODataPropertyConverter : IDataPropertyConverter
+{
+
+    public ODataPropertyConverter() 
+    { 
+        
+    }
+
+    public virtual bool CanConvert(PropertyInfo property)
+    {
+        return property.GetCustomAttributes<ODataTypeAttribute>().Any() && !property.GetCustomAttributes<ODataPropertyAttribute>().Any();
+    }
+
+    public virtual object OnConvertTo(PropertyInfo property, object value, IDataObject model)
+    {
+        //No Implimented Here.
+        return default;
+    }
+       
+    public virtual object OnConvertFrom(PropertyInfo property, object value, IDataObject model)
+    {
+        //No Implimented Here.
+        return default;
+    }
+
+}
+```
+
+To use converters you must inject new instances in to the ODataContext static class, for example:
+
+```c#
+ODataContext.PropertyConverters.Add(new ODataConverterIPAddress<IPAddress>());
+```
+
+OR using the generic one with callbacks. This example would be for converting the property type to one to store in the database.
+
+```c#
+ODataContext.PropertyConverters.Add(new ODataConverterGeneric<IPAddress>()
+{
+    OnConvertToTrigger = (value, attribute) =>
+    {
+        IPAddress val = (IPAddress)value;
+        return attribute.MsSQLDataType switch
+        {
+            System.Data.SqlDbType.VarChar => val.ToString(),
+            System.Data.SqlDbType.NVarChar => val.ToString(),
+            System.Data.SqlDbType.Char => val.ToString(),
+            System.Data.SqlDbType.NChar => val.ToString(),
+            System.Data.SqlDbType.Text => val.ToString(),
+            System.Data.SqlDbType.NText => val.ToString(),
+            System.Data.SqlDbType.Binary => val.GetAddressBytes(),
+            System.Data.SqlDbType.VarBinary => val.GetAddressBytes(),
+            _ => throw new FormatException("This converter " + this.GetType().Name + " failed to convert based on the field definition."),
+        };
+    },
+    OnConvertFromTrigger = (value, attribute) =>
+    {
+        return attribute.MsSQLDataType switch
+        {
+            System.Data.SqlDbType.VarChar => IPAddress.Parse(value.ToString()),
+            System.Data.SqlDbType.NVarChar => IPAddress.Parse(value.ToString()),
+            System.Data.SqlDbType.Char => IPAddress.Parse(value.ToString()),
+            System.Data.SqlDbType.NChar => IPAddress.Parse(value.ToString()),
+            System.Data.SqlDbType.Text => IPAddress.Parse(value.ToString()),
+            System.Data.SqlDbType.NText => IPAddress.Parse(value.ToString()),
+            System.Data.SqlDbType.Binary => new IPAddress((byte[])value),
+            System.Data.SqlDbType.VarBinary => new IPAddress((byte[])value),
+            _ => throw new FormatException("This converter " + this.GetType().Name + " failed to convert based on the field definition."),
+        };
+    }
+});
+```
+
+In your class you would have a property bound to the database as one type but the property type is completly different.<br />
+The converters will pick this up matching the types from both ends and running the read or write to convert the value.
+
+```c#
+public class TErpUser : ErpObject<TErpUser>, IErpUser
+{
+
+    [ODataType(SqlDbType.VarChar, 15)]
+    public IPAddress UIpAddr { get; set; }
+
+    public TErpUser(string connectionString)
+        : base(connectionString)
+    {
+
+    }
+
+}
+```
 
 # Example of database migration.
 
