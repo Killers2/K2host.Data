@@ -16,6 +16,7 @@ Also supports external data triggers using the trigger service to get any reques
     <PackageIconUrl />
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>K2host, Data, Database, EntityFramework, DMM, data model mapping</PackageTags>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
