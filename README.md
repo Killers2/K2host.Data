@@ -1,7 +1,7 @@
 
 # K2host.Data
 
-An alternative to Entity Framework Core using simple DMM (Data Model Mapping) from code to MsSQL
+An OLD alternative to Entity Framework Core using simple DMM (Data Model Mapping) from code to MsSQL
 The objects that can inherit this base can still be used with Entity Framework.
 
 Also supports external data triggers using the trigger service to get any requests from a remote or local sqltrigger.
