@@ -346,7 +346,7 @@ namespace K2host.Data.Extentions.ODataConnection
                 return tempdataset;
 
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 return null;
             }
