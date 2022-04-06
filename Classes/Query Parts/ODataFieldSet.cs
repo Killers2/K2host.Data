@@ -7,14 +7,19 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
+
 using K2host.Core;
 using K2host.Data.Enums;
-
-using gd = K2host.Data.OHelpers;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -78,8 +83,9 @@ namespace K2host.Data.Classes
 
         /// <summary>
         /// The data type of the value(s)
+        /// <para>This can be SqlDbType, MySqlDbType or OracleDbType</para>
         /// </summary>
-        public SqlDbType DataType { get; set; }
+        public int DataType { get; set; }
 
         /// <summary>
         /// The data update operator
@@ -95,7 +101,7 @@ namespace K2host.Data.Classes
             Column          = null;
             Alias           = string.Empty;
             NewValue        = string.Empty;
-            DataType        = SqlDbType.NVarChar;
+            DataType        = (int)SqlDbType.NVarChar;
             UpdateOperator  = ODataUpdateOperator.EQUAL;
             Function        = ODataFunction.NONE;
             Cast            = ODataCast.NONE;
@@ -108,149 +114,55 @@ namespace K2host.Data.Classes
         /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public string ToUpdateString() 
+        public string ToUpdateString(out IEnumerable<DbParameter> parameters)
         {
-            StringBuilder output = new();
 
-            output.Append("[" + Column.Name + "]");
-           
-            if (UpdateOperator == ODataUpdateOperator.EQUAL)
-                output.Append(" = ");
-           
-            if (UpdateOperator == ODataUpdateOperator.PLUS_EQUAL)
-                output.Append(" += ");
+            string output = ODataContext
+                .Connection()
+                .GetFactory()
+                .FieldSetUpdateBuildString(this, out IEnumerable<DbParameter> pta);
 
-            output.Append(gd.GetSqlRepresentation(Column, NewValue));
+            parameters = pta;
 
-            return output.ToString();
+            return output;
+
         }
 
         /// <summary>
         /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public string ToInsertString()
+        public string ToInsertString(out IEnumerable<DbParameter> parameters)
         {
-            StringBuilder output = new();
 
-            output.Append("[" + Column.Name + "]");
+            string output = ODataContext
+                .Connection()
+                .GetFactory()
+                .FieldSetInsertBuildString(this, out IEnumerable<DbParameter> pta);
 
-            return output.ToString();
+            parameters = pta;
+
+            return output;
+
         }
 
         /// <summary>
         /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public string ToSelectString(bool UseFieldPrefixing = false, bool UseFieldDefaultAlias = false)
+        public string ToSelectString(out IEnumerable<DbParameter> parameters, bool UseFieldPrefixing = false, bool UseFieldDefaultAlias = false)
         {
             
-            StringBuilder output = new();
+            string output = ODataContext
+                .Connection()
+                .GetFactory()
+                .FieldSetSelectBuildString(this, out IEnumerable<DbParameter> pta, UseFieldPrefixing, UseFieldDefaultAlias);
 
-            if (Function != ODataFunction.NONE)
-                output.Append(Function.ToString() + "(");
+            parameters = pta;
 
-            if (Cast != ODataCast.NONE)
-                output.Append("CAST(");
-
-            if (Prefix != null)
-                output.Append(gd.GetSqlRepresentation(gd.GetSqlDbType(Prefix.GetType()), Prefix) + " + ");
-
-            if (Case != null && Column == null && SubQuery == null) 
-            {
-
-                output.Append("CASE ");
-
-                Case.ForEach(c => {
-                    output.Append(c.ToString(UseFieldPrefixing) + " ");
-                });
-
-                output.Remove(output.Length - 1, 1);
-
-                output.Append(" END ");
-             
-                if (Cast != ODataCast.NONE)
-                    output.Append(" AS " + Cast.ToString() + ") ");
-
-                if (Suffix != null)
-                    output.Append("+ " + gd.GetSqlRepresentation(gd.GetSqlDbType(Suffix.GetType()), Suffix) + " ");
-
-                if (Function != ODataFunction.NONE)
-                    output.Append(") ");
-            
-                if (!string.IsNullOrEmpty(Alias))
-                    output.Append("AS [" + Alias + "]");
-
-            }
-
-            if (Case == null && Column != null && SubQuery == null)
-            {
-
-                if (UseFieldPrefixing)
-                    output.Append(Column.ReflectedType.GetMappedName() + ".");
-
-                output.Append("[" + Column.Name + "]");
-               
-                if (Cast != ODataCast.NONE)
-                    output.Append(" AS " + Cast.ToString() + ") ");
-
-                if (Suffix != null)
-                    output.Append("+ " + gd.GetSqlRepresentation(gd.GetSqlDbType(Suffix.GetType()), Suffix) + " ");
-
-                if (Function != ODataFunction.NONE)
-                    output.Append(") ");
-               
-                if (UseFieldDefaultAlias)
-                    output.Append(" AS [" + Column.ReflectedType.GetMappedName() + "." + Column.Name + "]");
-
-                if (!UseFieldDefaultAlias && !string.IsNullOrEmpty(Alias))
-                    output.Append(" AS [" + Alias + "]");
-
-            }
-
-            if (Case == null && Column == null && SubQuery != null)
-            {
-
-                output.Append('(');
-                output.Append(SubQuery.ToString());
-                output.Append(") ");
-
-                if (Cast != ODataCast.NONE)
-                    output.Append(" AS " + Cast.ToString() + ") ");
-
-                if (Suffix != null)
-                    output.Append("+ " + gd.GetSqlRepresentation(gd.GetSqlDbType(Suffix.GetType()), Suffix) + " ");
-                
-                if (Function != ODataFunction.NONE)
-                    output.Append(") ");
-
-                if (!string.IsNullOrEmpty(Alias))
-                    output.Append(" AS [" + Alias + "]");
-            }
-
-            if (Case == null && Column == null && SubQuery == null && NewValue != null)
-            {
-
-                output.Append(gd.GetSqlRepresentation(DataType, NewValue));
-              
-                if (Cast != ODataCast.NONE)
-                    output.Append(" AS " + Cast.ToString() + ") ");
-
-                if (Suffix != null)
-                    output.Append("+ " + gd.GetSqlRepresentation(gd.GetSqlDbType(Suffix.GetType()), Suffix) + " ");
-
-                if (Function != ODataFunction.NONE)
-                    output.Append(") ");
-
-                if (!string.IsNullOrEmpty(Alias))
-                    output.Append(" AS [" + Alias + "]");
-
-            }
-
-            return output.ToString();
+            return output;
 
         }
-
 
         #region Deconstuctor
 

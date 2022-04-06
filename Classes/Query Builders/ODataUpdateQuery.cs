@@ -7,9 +7,17 @@
 */
 using System;
 using System.Text;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Data;
+using System.Linq;
+
+using Oracle.ManagedDataAccess.Client;
+using MySql.Data.MySqlClient;
 
 using K2host.Core;
 using K2host.Data.Interfaces;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -19,6 +27,10 @@ namespace K2host.Data.Classes
     /// </summary>
     public class ODataUpdateQuery : IDataQuery
     {
+        /// <summary>
+        /// The list of parameters for parameter based queries
+        /// </summary>
+        public IEnumerable<DbParameter> Parameters { get; set; } = Array.Empty<DbParameter>();
 
         /// <summary>
         /// Optional: Enables placing the object / table name in front of the field xxxx.[xxxxx].
@@ -71,45 +83,12 @@ namespace K2host.Data.Classes
         /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() 
+        public override string ToString()
         {
-
-            StringBuilder output = new();
-
-            var FromTableName = From.GetMappedName();
-
-            output.Append("UPDATE tbl_" + FromTableName + " SET ");
-
-            if (Fields != null)
-                Fields.ForEach(f => { output.Append(f.ToUpdateString() + ", "); });
-
-            output.Remove(output.Length - 2, 2);
-
-            if (Joins != null || Applies != null)
-            {
-
-                output.Append(" FROM tbl_" + FromTableName + " ");
-
-                if (Joins != null)
-                    Joins.ForEach(j => {
-                        var JoinTableName = j.Join.GetMappedName();
-                        output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN tbl_" + JoinTableName + " " + JoinTableName + " ON " + JoinTableName + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.GetMappedName() + ".[" + j.JoinEqualsField.Name + "]"); 
-                    });
-
-                if (Applies != null)
-                    Applies.ForEach(a => { output.Append(" " + a.ToString()); });
-
-            }
-
-            if (Where != null)  {
-                output.Append(" WHERE ");
-                Where.ForEach(condition => {
-                    output.Append(condition.ToString((Joins != null || Applies != null || UseFieldPrefixing))); 
-                });
-            }
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .UpdateQueryBuildString(this);
         }
 
         #region Deconstuctor

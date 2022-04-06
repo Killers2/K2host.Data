@@ -28,11 +28,14 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using ExcelDataReader;
+using EFCore.BulkExtensions;
 
 using K2host.Core;
 using K2host.Data.Enums;
 using K2host.Data.Classes;
 using K2host.Data.Attributes;
+using K2host.Data.Extentions.ODataConnection;
+using K2host.Data.Interfaces;
 
 namespace K2host.Data
 {
@@ -40,20 +43,54 @@ namespace K2host.Data
     public static class OHelpers
     {
 
-        #region MSSQL Parameter Builders
+        #region Parameter Builders
 
-        public static SqlParameter ParamMsSql(DbType datatype, object value, string paramname)
+        public static DbParameter CreateParam(SqlDbType datatype, object value, string paramname)
         {
             try
             {
-                SqlParameter result = new()
+                return new SqlParameter()
                 {
-                    DbType = datatype,
-                    Value = value,
-                    ParameterName = paramname
+                    SqlDbType       = datatype,
+                    Value           = value,
+                    ParameterName   = paramname
                 };
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
-                return result;
+        public static DbParameter CreateParam(SqlDbType datatype, ParameterDirection direction, object value, string paramname)
+        {
+            try
+            {
+                return new SqlParameter()
+                {
+                    SqlDbType       = datatype,
+                    Value           = value,
+                    ParameterName   = paramname,
+                    Direction       = direction
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static DbParameter CreateParam(DbType datatype, object value, string paramname)
+        {
+            try
+            {
+
+                return new OdbcParameter()
+                {
+                    DbType          = datatype,
+                    Value           = value,
+                    ParameterName   = paramname
+                };
 
             }
             catch
@@ -62,19 +99,17 @@ namespace K2host.Data
             }
         }
 
-        public static SqlParameter ParamMsSql(DbType datatype, ParameterDirection direction, object value, string paramname)
+        public static DbParameter CreateParam(DbType datatype, ParameterDirection direction, object value, string paramname)
         {
             try
             {
-                SqlParameter result = new()
+                return new OdbcParameter()
                 {
-                    DbType = datatype,
-                    Value = value,
-                    ParameterName = paramname,
-                    Direction = direction
+                    DbType          = datatype,
+                    Value           = value,
+                    ParameterName   = paramname,
+                    Direction       = direction
                 };
-
-                return result;
             }
             catch
             {
@@ -82,17 +117,17 @@ namespace K2host.Data
             }
         }
 
-        public static SqlParameter ParamMsSql(SqlDbType datatype, object value, string paramname)
+        public static DbParameter CreateParam(MySqlDbType datatype, object value, string paramname)
         {
             try
             {
-                SqlParameter temp = new()
+
+                return new MySqlParameter()
                 {
-                    SqlDbType = datatype,
-                    Value = value,
-                    ParameterName = paramname
+                    MySqlDbType     = datatype,
+                    Value           = value,
+                    ParameterName   = paramname
                 };
-                return temp;
             }
             catch
             {
@@ -100,18 +135,17 @@ namespace K2host.Data
             }
         }
 
-        public static SqlParameter ParamMsSql(SqlDbType datatype, ParameterDirection direction, object value, string paramname)
+        public static DbParameter CreateParam(MySqlDbType datatype, ParameterDirection direction, object value, string paramname)
         {
             try
             {
-                SqlParameter temp = new()
+                return new MySqlParameter ()
                 {
-                    SqlDbType = datatype,
-                    Value = value,
-                    ParameterName = paramname,
-                    Direction = direction
+                    MySqlDbType     = datatype,
+                    Value           = value,
+                    ParameterName   = paramname,
+                    Direction       = direction
                 };
-                return temp;
             }
             catch
             {
@@ -119,23 +153,16 @@ namespace K2host.Data
             }
         }
 
-        #endregion
-
-        #region Odbc Parameter Builders
-
-        public static OdbcParameter ParamOdbc(DbType datatype, object value, string paramname)
+        public static DbParameter CreateParam(OracleDbType datatype, object value, string paramname)
         {
             try
             {
-
-                OdbcParameter temp = new()
+                return new OracleParameter()
                 {
-                    DbType = datatype,
-                    Value = value,
-                    ParameterName = paramname
+                    OracleDbType    = datatype,
+                    Value           = value,
+                    ParameterName   = paramname
                 };
-
-                return temp;
             }
             catch
             {
@@ -143,104 +170,17 @@ namespace K2host.Data
             }
         }
 
-        public static OdbcParameter ParamOdbc(DbType datatype, ParameterDirection direction, object value, string paramname)
+        public static DbParameter CreateParam(OracleDbType datatype, ParameterDirection direction, object value, string paramname)
         {
             try
             {
-                OdbcParameter temp = new()
+                return new OracleParameter()
                 {
-                    DbType = datatype,
-                    Value = value,
-                    ParameterName = paramname,
-                    Direction = direction
+                    OracleDbType    = datatype,
+                    Value           = value,
+                    ParameterName   = paramname,
+                    Direction       = direction
                 };
-                return temp;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region MySql Parameter Builders
-
-        public static MySqlParameter ParamMySql(MySqlDbType datatype, object value, string paramname)
-        {
-            try
-            {
-
-                MySqlParameter temp = new()
-                {
-                    MySqlDbType = datatype,
-                    Value = value,
-                    ParameterName = paramname
-                };
-
-                return temp;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static MySqlParameter ParamMySql(MySqlDbType datatype, ParameterDirection direction, object value, string paramname)
-        {
-            try
-            {
-                MySqlParameter temp = new()
-                {
-                    MySqlDbType = datatype,
-                    Value = value,
-                    ParameterName = paramname,
-                    Direction = direction
-                };
-                return temp;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region Oracle Parameter Builders
-
-        public static OracleParameter ParamOracle(OracleDbType datatype, object value, string paramname)
-        {
-            try
-            {
-
-                OracleParameter temp = new()
-                {
-                    OracleDbType = datatype,
-                    Value = value,
-                    ParameterName = paramname
-                };
-
-                return temp;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static OracleParameter ParamOracle(OracleDbType datatype, ParameterDirection direction, object value, string paramname)
-        {
-            try
-            {
-                OracleParameter temp = new()
-                {
-                    OracleDbType = datatype,
-                    Value = value,
-                    ParameterName = paramname,
-                    Direction = direction
-                };
-                return temp;
             }
             catch
             {
@@ -252,284 +192,10 @@ namespace K2host.Data
 
         #region DataSet Builders
 
-        public static DataSet Get(string StoredProc, DbParameter[] Parameters, string ConnectionString)
+        public static DataSet Get(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType)
         {
             try
             {
-
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(StoredProc);
-                using var tempadaptor = new SqlDataAdapter();
-                tempcommand.Connection = tempconnection;
-                tempcommand.CommandTimeout = 10000;
-                tempcommand.CommandType = CommandType.StoredProcedure;
-
-                if (Parameters != null)
-                    tempcommand.Parameters.AddRange(Parameters);
-
-                tempadaptor.SelectCommand = tempcommand;
-
-                var tempdataset = new DataSet();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-
-        }
-
-        public static DataSet Get(string StoredProc, DbParameter[] Parameters, OConnection Connection, OConnectionType ConnectionType)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
-
-                switch (ConnectionType)
-                {
-                    case OConnectionType.SQLStandardSecurity:
-                    case OConnectionType.SQLTrustedConnection:
-                    case OConnectionType.SQLTrustedConnectionCE:
-
-                        using (var tempconnection = new SqlConnection(ConnectionString))
-                        using (var tempcommand = new SqlCommand(StoredProc))
-                        using (var tempadaptor = new SqlDataAdapter())
-                        {
-                            tempcommand.Connection = tempconnection;
-                            tempcommand.CommandTimeout = 10000;
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-
-                            tempadaptor.SelectCommand = tempcommand;
-
-                            var tempdataset = new DataSet();
-
-                            tempadaptor.Fill(tempdataset);
-
-                            return tempdataset;
-                        }
-
-                    case OConnectionType.OracleStandardSecurity:
-                    case OConnectionType.OracleCredentialsSecurity:
-
-                        using (var tempconnection = new OracleConnection(ConnectionString))
-                        using (var tempcommand = new OracleCommand(StoredProc))
-                        using (var tempadaptor = new OracleDataAdapter())
-                        {
-                            tempcommand.Connection = tempconnection;
-                            tempcommand.CommandTimeout = 10000;
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-
-                            tempadaptor.SelectCommand = tempcommand;
-
-                            var tempdataset = new DataSet();
-
-                            tempadaptor.Fill(tempdataset);
-
-                            return tempdataset;
-                        }
-
-                    case OConnectionType.MySqlStandardSecurity:
-
-                        using (var tempconnection = new MySqlConnection(ConnectionString))
-                        using (var tempcommand = new MySqlCommand(StoredProc))
-                        using (var tempadaptor = new MySqlDataAdapter())
-                        {
-                            tempcommand.Connection = tempconnection;
-                            tempcommand.CommandTimeout = 10000;
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-
-                            tempadaptor.SelectCommand = tempcommand;
-
-                            var tempdataset = new DataSet();
-
-                            tempadaptor.Fill(tempdataset);
-
-                            return tempdataset;
-                        }
-
-                }
-
-                return null;
-
-            }
-            catch
-            {
-                return null;
-            }
-
-
-        }
-
-        public static DataSet Get(string StoredProc, DbParameter[] Parameters, string ConnectionString, out Exception ex)
-        {
-            try
-            {
-                ex = null;
-
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(StoredProc);
-                using var tempadaptor = new SqlDataAdapter();
-                tempcommand.Connection = tempconnection;
-                tempcommand.CommandTimeout = 10000;
-                tempcommand.CommandType = CommandType.StoredProcedure;
-
-                if (Parameters != null)
-                    tempcommand.Parameters.AddRange(Parameters);
-
-                tempadaptor.SelectCommand = tempcommand;
-
-                var tempdataset = new DataSet();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-
-            }
-            catch (Exception error)
-            {
-                ex = error;
-                return null;
-            }
-
-
-        }
-
-        public static DataSet Get(string StoredProc, DbParameter[] Parameters, OConnection Connection, OConnectionType ConnectionType, out Exception ex)
-        {
-            try
-            {
-                ex = null;
-
-                string ConnectionString = Connection.ToString(ConnectionType);
-
-                switch (ConnectionType)
-                {
-                    case OConnectionType.SQLStandardSecurity:
-                    case OConnectionType.SQLTrustedConnection:
-                    case OConnectionType.SQLTrustedConnectionCE:
-
-                        using (var tempconnection = new SqlConnection(ConnectionString))
-                        using (var tempcommand = new SqlCommand(StoredProc))
-                        using (var tempadaptor = new SqlDataAdapter())
-                        {
-                            tempcommand.Connection = tempconnection;
-                            tempcommand.CommandTimeout = 10000;
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-
-                            tempadaptor.SelectCommand = tempcommand;
-
-                            var tempdataset = new DataSet();
-
-                            tempadaptor.Fill(tempdataset);
-
-                            return tempdataset;
-                        }
-
-                    case OConnectionType.OracleStandardSecurity:
-                    case OConnectionType.OracleCredentialsSecurity:
-
-                        using (var tempconnection = new OracleConnection(ConnectionString))
-                        using (var tempcommand = new OracleCommand(StoredProc))
-                        using (var tempadaptor = new OracleDataAdapter())
-                        {
-                            tempcommand.Connection = tempconnection;
-                            tempcommand.CommandTimeout = 10000;
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-
-                            tempadaptor.SelectCommand = tempcommand;
-
-                            var tempdataset = new DataSet();
-
-                            tempadaptor.Fill(tempdataset);
-
-                            return tempdataset;
-                        }
-
-                    case OConnectionType.MySqlStandardSecurity:
-                        using (var tempconnection = new MySqlConnection(ConnectionString))
-                        using (var tempcommand = new MySqlCommand(StoredProc))
-                        using (var tempadaptor = new MySqlDataAdapter())
-                        {
-                            tempcommand.Connection = tempconnection;
-                            tempcommand.CommandTimeout = 10000;
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-
-                            tempadaptor.SelectCommand = tempcommand;
-
-                            var tempdataset = new DataSet();
-
-                            tempadaptor.Fill(tempdataset);
-
-                            return tempdataset;
-                        }
-
-                }
-
-                return null;
-
-            }
-            catch (Exception error)
-            {
-                ex = error;
-                return null;
-            }
-
-
-        }
-
-        public static DataSet Get(string Sql, string ConnectionString)
-        {
-            try
-            {
-                using var tempconnection    = new SqlConnection(ConnectionString);
-                using var tempcommand       = new SqlCommand(Sql);
-                using var tempadaptor       = new SqlDataAdapter();
-                tempcommand.CommandTimeout  = 500;
-                tempcommand.Connection      = tempconnection;
-                tempadaptor.SelectCommand   = tempcommand;
-
-                var tempdataset = new DataSet();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static DataSet Get(string Sql, OConnection Connection, OConnectionType ConnectionType)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
 
                 switch (ConnectionType)
                 {
@@ -541,8 +207,13 @@ namespace K2host.Data
                         using (var tempcommand = new SqlCommand(Sql))
                         using (var tempadaptor = new SqlDataAdapter())
                         {
-                            tempcommand.CommandTimeout = 500;
                             tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = 10000;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
                             tempadaptor.SelectCommand = tempcommand;
 
                             var tempdataset = new DataSet();
@@ -559,8 +230,13 @@ namespace K2host.Data
                         using (var tempcommand = new OracleCommand(Sql))
                         using (var tempadaptor = new OracleDataAdapter())
                         {
-                            tempcommand.CommandTimeout = 500;
                             tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = 10000;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
                             tempadaptor.SelectCommand = tempcommand;
 
                             var tempdataset = new DataSet();
@@ -576,8 +252,13 @@ namespace K2host.Data
                         using (var tempcommand = new MySqlCommand(Sql))
                         using (var tempadaptor = new MySqlDataAdapter())
                         {
-                            tempcommand.CommandTimeout = 500;
                             tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = 10000;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
                             tempadaptor.SelectCommand = tempcommand;
 
                             var tempdataset = new DataSet();
@@ -596,42 +277,13 @@ namespace K2host.Data
             {
                 return null;
             }
-
         }
 
-        public static DataSet Get(string Sql, string ConnectionString, out Exception ex)
+        public static DataSet Get(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType, out Exception ex)
         {
+            ex = null;
             try
             {
-                ex = null;
-
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(Sql);
-                using var tempadaptor = new SqlDataAdapter();
-                tempcommand.CommandTimeout = 500;
-                tempcommand.Connection = tempconnection;
-                tempadaptor.SelectCommand = tempcommand;
-
-                var tempdataset = new DataSet();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-            }
-            catch (Exception error)
-            {
-                ex = error;
-                return null;
-            }
-        }
-
-        public static DataSet Get(string Sql, OConnection Connection, OConnectionType ConnectionType, out Exception ex)
-        {
-            try
-            {
-                ex = null;
-
-                string ConnectionString = Connection.ToString(ConnectionType);
 
                 switch (ConnectionType)
                 {
@@ -643,8 +295,13 @@ namespace K2host.Data
                         using (var tempcommand = new SqlCommand(Sql))
                         using (var tempadaptor = new SqlDataAdapter())
                         {
-                            tempcommand.CommandTimeout = 500;
                             tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = 10000;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
                             tempadaptor.SelectCommand = tempcommand;
 
                             var tempdataset = new DataSet();
@@ -661,8 +318,13 @@ namespace K2host.Data
                         using (var tempcommand = new OracleCommand(Sql))
                         using (var tempadaptor = new OracleDataAdapter())
                         {
-                            tempcommand.CommandTimeout = 500;
                             tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = 10000;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
                             tempadaptor.SelectCommand = tempcommand;
 
                             var tempdataset = new DataSet();
@@ -678,8 +340,13 @@ namespace K2host.Data
                         using (var tempcommand = new MySqlCommand(Sql))
                         using (var tempadaptor = new MySqlDataAdapter())
                         {
-                            tempcommand.CommandTimeout = 500;
                             tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = 10000;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
                             tempadaptor.SelectCommand = tempcommand;
 
                             var tempdataset = new DataSet();
@@ -689,6 +356,181 @@ namespace K2host.Data
                             return tempdataset;
                         }
 
+                }
+
+                return null;
+
+            }
+            catch(Exception error)
+            {
+                ex = error;
+                return null;
+            }
+        }
+
+        public static DataSet Get(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType, int sqltimout = 500)
+        {
+            try
+            {
+
+                switch (ConnectionType)
+                {
+                    case OConnectionType.SQLStandardSecurity:
+                    case OConnectionType.SQLTrustedConnection:
+                    case OConnectionType.SQLTrustedConnectionCE:
+
+                        using (var tempconnection = new SqlConnection(ConnectionString))
+                        using (var tempcommand = new SqlCommand(Sql))
+                        using (var tempadaptor = new SqlDataAdapter())
+                        {
+                            tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
+                            tempadaptor.SelectCommand = tempcommand;
+
+                            var tempdataset = new DataSet();
+
+                            tempadaptor.Fill(tempdataset);
+
+                            return tempdataset;
+                        }
+
+                    case OConnectionType.OracleStandardSecurity:
+                    case OConnectionType.OracleCredentialsSecurity:
+
+                        using (var tempconnection = new OracleConnection(ConnectionString))
+                        using (var tempcommand = new OracleCommand(Sql))
+                        using (var tempadaptor = new OracleDataAdapter())
+                        {
+                            tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
+                            tempadaptor.SelectCommand = tempcommand;
+
+                            var tempdataset = new DataSet();
+
+                            tempadaptor.Fill(tempdataset);
+
+                            return tempdataset;
+                        }
+
+                    case OConnectionType.MySqlStandardSecurity:
+
+                        using (var tempconnection = new MySqlConnection(ConnectionString))
+                        using (var tempcommand = new MySqlCommand(Sql))
+                        using (var tempadaptor = new MySqlDataAdapter())
+                        {
+                            tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
+                            tempadaptor.SelectCommand = tempcommand;
+
+                            var tempdataset = new DataSet();
+
+                            tempadaptor.Fill(tempdataset);
+
+                            return tempdataset;
+                        }
+
+                }
+
+                return null;
+
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static DataSet Get(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType, out Exception ex, int sqltimout = 500)
+        {
+            ex = null;
+            try
+            {
+
+                switch (ConnectionType)
+                {
+                    case OConnectionType.SQLStandardSecurity:
+                    case OConnectionType.SQLTrustedConnection:
+                    case OConnectionType.SQLTrustedConnectionCE:
+
+                        using (var tempconnection = new SqlConnection(ConnectionString))
+                        using (var tempcommand = new SqlCommand(Sql))
+                        using (var tempadaptor = new SqlDataAdapter())
+                        {
+                            tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
+                            tempadaptor.SelectCommand = tempcommand;
+
+                            var tempdataset = new DataSet();
+
+                            tempadaptor.Fill(tempdataset);
+
+                            return tempdataset;
+                        }
+
+                    case OConnectionType.OracleStandardSecurity:
+                    case OConnectionType.OracleCredentialsSecurity:
+
+                        using (var tempconnection = new OracleConnection(ConnectionString))
+                        using (var tempcommand = new OracleCommand(Sql))
+                        using (var tempadaptor = new OracleDataAdapter())
+                        {
+                            tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
+                            tempadaptor.SelectCommand = tempcommand;
+
+                            var tempdataset = new DataSet();
+
+                            tempadaptor.Fill(tempdataset);
+
+                            return tempdataset;
+                        }
+
+                    case OConnectionType.MySqlStandardSecurity:
+
+                        using (var tempconnection = new MySqlConnection(ConnectionString))
+                        using (var tempcommand = new MySqlCommand(Sql))
+                        using (var tempadaptor = new MySqlDataAdapter())
+                        {
+                            tempcommand.Connection = tempconnection;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
+
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+
+                            tempadaptor.SelectCommand = tempcommand;
+
+                            var tempdataset = new DataSet();
+
+                            tempadaptor.Fill(tempdataset);
+
+                            return tempdataset;
+                        }
 
                 }
 
@@ -702,385 +544,14 @@ namespace K2host.Data
             }
         }
         
-        public static DataSet Get(string Sql, string ConnectionString, int sqltimout = 500)
-        {
-            try
-            {
-
-                using var tempconnection = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var tempcommand = new System.Data.Odbc.OdbcCommand();
-                using var tempadaptor = new System.Data.Odbc.OdbcDataAdapter();
-                tempcommand.CommandTimeout = sqltimout;
-                tempcommand.Connection = tempconnection;
-                tempcommand.CommandText = Sql;
-
-                tempadaptor.SelectCommand = tempcommand;
-
-                DataSet tempdataset = new();
-
-                tempconnection.Open();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static DataSet Get(string Sql, OConnection Connection, OConnectionType ConnectionType, int sqltimout = 500)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
-
-                using var tempconnection = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var tempcommand = new System.Data.Odbc.OdbcCommand();
-                using var tempadaptor = new System.Data.Odbc.OdbcDataAdapter();
-                tempcommand.CommandTimeout = sqltimout;
-                tempcommand.Connection = tempconnection;
-                tempcommand.CommandText = Sql;
-
-                tempadaptor.SelectCommand = tempcommand;
-
-                DataSet tempdataset = new();
-
-                tempconnection.Open();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static DataSet Get(string StoredProc, OdbcParameter[] Parameters, string ConnectionString, int sqltimout = 500)
-        {
-            try
-            {
-
-                using var tempconnection = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var tempcommand = new System.Data.Odbc.OdbcCommand(StoredProc);
-                using var tempadaptor = new System.Data.Odbc.OdbcDataAdapter();
-                tempcommand.CommandTimeout = sqltimout;
-                tempcommand.Connection = tempconnection;
-                tempcommand.CommandType = CommandType.StoredProcedure;
-
-                if (Parameters != null)
-                    tempcommand.Parameters.AddRange(Parameters);
-
-                tempadaptor.SelectCommand = tempcommand;
-
-                DataSet tempdataset = new();
-
-                tempconnection.Open();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static DataSet Get(string StoredProc, OdbcParameter[] Parameters, OConnection Connection, OConnectionType ConnectionType, int sqltimout = 500)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
-
-                using var tempconnection = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var tempcommand = new System.Data.Odbc.OdbcCommand(StoredProc);
-                using var tempadaptor = new System.Data.Odbc.OdbcDataAdapter();
-                tempcommand.CommandTimeout = sqltimout;
-                tempcommand.Connection = tempconnection;
-                tempcommand.CommandType = CommandType.StoredProcedure;
-
-                if (Parameters != null)
-                    tempcommand.Parameters.AddRange(Parameters);
-
-                tempadaptor.SelectCommand = tempcommand;
-
-                DataSet tempdataset = new();
-
-                tempconnection.Open();
-
-                tempadaptor.Fill(tempdataset);
-
-                return tempdataset;
-
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static bool Clear(DataSet e)
-        {
-            try
-            {
-                e.Clear();
-                e.Tables.Clear();
-                e.Dispose();
-                e = null;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-      
-        public static ODataFieldSet[] GetFieldSets(this Type obj, ODataFieldSetType e)
-        {
-            List<ODataFieldSet> output = new();
-
-            ODataExceptionType NonInteract = e switch
-            {
-                ODataFieldSetType.SELECT => ODataExceptionType.NON_SELECT,
-                ODataFieldSetType.INSERT => ODataExceptionType.NON_INSERT,
-                ODataFieldSetType.UPDATE => ODataExceptionType.NON_UPDATE,
-                _ => ODataExceptionType.NON_SELECT,
-            };
-
-            foreach (PropertyInfo p in obj.GetProperties())
-                if (p.GetCustomAttributes(typeof(ODataExceptionAttribute), true).Length > 0)
-                {
-                    if (!((ODataExceptionAttribute)p.GetCustomAttributes(typeof(ODataExceptionAttribute), true)[0]).ODataExceptionType.HasFlag(NonInteract))
-                        output.Add(
-                            new ODataFieldSet()
-                            {
-                                Column = p,
-                                DataType = GetSqlDbType(p.PropertyType)
-                            });
-
-                }
-                else
-                    output.Add(
-                        new ODataFieldSet()
-                        {
-                            Column = p,
-                            DataType = GetSqlDbType(p.PropertyType)
-                        });
-
-            return output.ToArray();
-        }
-
         #endregion
 
         #region Query Runners
 
-        public static bool Query(string StoredProc, SqlParameter[] Parameters, string ConnectionString)
+        public static bool Query(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType)
         {
             try
             {
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(StoredProc);
-                tempcommand.CommandType = CommandType.StoredProcedure;
-                tempcommand.Connection = tempconnection;
-                tempconnection.Open();
-                if (Parameters != null)
-                    tempcommand.Parameters.AddRange(Parameters);
-                tempcommand.ExecuteNonQuery();
-                return true;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public static bool Query(string StoredProc, DbParameter[] Parameters, OConnection Connection, OConnectionType ConnectionType)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
-
-                switch (ConnectionType)
-                {
-                    case OConnectionType.SQLStandardSecurity:
-                    case OConnectionType.SQLTrustedConnection:
-                    case OConnectionType.SQLTrustedConnectionCE:
-
-                        using (var tempconnection = new SqlConnection(ConnectionString))
-                        using (var tempcommand = new SqlCommand(StoredProc))
-                        {
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-                            tempcommand.Connection = tempconnection;
-                            tempconnection.Open();
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-                            tempcommand.ExecuteNonQuery();
-                            return true;
-                        }
-
-                    case OConnectionType.OracleStandardSecurity:
-                    case OConnectionType.OracleCredentialsSecurity:
-
-                        using (var tempconnection = new OracleConnection(ConnectionString))
-                        using (var tempcommand = new OracleCommand(StoredProc))
-                        {
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-                            tempcommand.Connection = tempconnection;
-                            tempconnection.Open();
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-                            tempcommand.ExecuteNonQuery();
-                            return true;
-                        }
-
-                    case OConnectionType.MySqlStandardSecurity:
-
-                        using (var tempconnection = new MySqlConnection(ConnectionString))
-                        using (var tempcommand = new MySqlCommand(StoredProc))
-                        {
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-                            tempcommand.Connection = tempconnection;
-                            tempconnection.Open();
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-                            tempcommand.ExecuteNonQuery();
-                            return true;
-                        }
-
-                }
-
-                return false;
-
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public static bool Query(string StoredProc, SqlParameter[] Parameters, string ConnectionString, int sqltimout = 500)
-        {
-            try
-            {
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(StoredProc);
-                tempcommand.CommandType = CommandType.StoredProcedure;
-                tempcommand.CommandTimeout = sqltimout;
-                tempcommand.Connection = tempconnection;
-                tempconnection.Open();
-                if (Parameters != null)
-                    tempcommand.Parameters.AddRange(Parameters);
-                tempcommand.ExecuteNonQuery();
-                return true;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public static bool Query(string StoredProc, DbParameter[] Parameters, OConnection Connection, OConnectionType ConnectionType, int sqltimout = 500)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
-
-                switch (ConnectionType)
-                {
-                    case OConnectionType.SQLStandardSecurity:
-                    case OConnectionType.SQLTrustedConnection:
-                    case OConnectionType.SQLTrustedConnectionCE:
-
-                        using (var tempconnection = new SqlConnection(ConnectionString))
-                        using (var tempcommand = new SqlCommand(StoredProc))
-                        {
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-                            tempcommand.CommandTimeout = sqltimout;
-                            tempcommand.Connection = tempconnection;
-                            tempconnection.Open();
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-                            tempcommand.ExecuteNonQuery();
-                            return true;
-                        }
-
-                    case OConnectionType.OracleStandardSecurity:
-                    case OConnectionType.OracleCredentialsSecurity:
-
-                        using (var tempconnection = new OracleConnection(ConnectionString))
-                        using (var tempcommand = new OracleCommand(StoredProc))
-                        {
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-                            tempcommand.CommandTimeout = sqltimout;
-                            tempcommand.Connection = tempconnection;
-                            tempconnection.Open();
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-                            tempcommand.ExecuteNonQuery();
-                            return true;
-                        }
-
-                    case OConnectionType.MySqlStandardSecurity:
-
-                        using (var tempconnection = new MySqlConnection(ConnectionString))
-                        using (var tempcommand = new MySqlCommand(StoredProc))
-                        {
-                            tempcommand.CommandType = CommandType.StoredProcedure;
-                            tempcommand.CommandTimeout = sqltimout;
-                            tempcommand.Connection = tempconnection;
-                            tempconnection.Open();
-                            if (Parameters != null)
-                                tempcommand.Parameters.AddRange(Parameters);
-                            tempcommand.ExecuteNonQuery();
-                            return true;
-                        }
-
-                }
-
-                return false;
-
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public static bool Query(string Sql, string ConnectionString, int sqltimout = 500)
-        {
-            try
-            {
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(Sql);
-                tempcommand.CommandTimeout = sqltimout;
-                tempcommand.Connection = tempconnection;
-                tempconnection.Open();
-                tempcommand.ExecuteNonQuery();
-                return true;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public static bool Query(string Sql, OConnection Connection, OConnectionType ConnectionType, int sqltimout = 500)
-        {
-            try
-            {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
 
                 switch (ConnectionType)
                 {
@@ -1091,9 +562,11 @@ namespace K2host.Data
                         using (var tempconnection = new SqlConnection(ConnectionString))
                         using (var tempcommand = new SqlCommand(Sql))
                         {
-                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
                             tempcommand.Connection = tempconnection;
                             tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
                             tempcommand.ExecuteNonQuery();
                             return true;
                         }
@@ -1104,9 +577,11 @@ namespace K2host.Data
                         using (var tempconnection = new OracleConnection(ConnectionString))
                         using (var tempcommand = new OracleCommand(Sql))
                         {
-                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
                             tempcommand.Connection = tempconnection;
                             tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
                             tempcommand.ExecuteNonQuery();
                             return true;
                         }
@@ -1116,9 +591,11 @@ namespace K2host.Data
                         using (var tempconnection = new MySqlConnection(ConnectionString))
                         using (var tempcommand = new MySqlCommand(Sql))
                         {
-                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.CommandType = type;
                             tempcommand.Connection = tempconnection;
                             tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
                             tempcommand.ExecuteNonQuery();
                             return true;
                         }
@@ -1133,35 +610,13 @@ namespace K2host.Data
                 throw;
             }
         }
-      
-        public static bool Query(string Sql, string ConnectionString, out Exception ex)
-        {
-            ex = null;
-            try
-            {
-                using var tempconnection = new SqlConnection(ConnectionString);
-                using var tempcommand = new SqlCommand(Sql);
-                tempcommand.CommandTimeout = 500;
-                tempcommand.Connection = tempconnection;
-                tempconnection.Open();
-                tempcommand.ExecuteNonQuery();
-                return true;
-            }
-            catch (Exception error)
-            {
-                ex = error;
-                return false;
-            }
-        }
 
-        public static bool Query(string Sql, OConnection Connection, OConnectionType ConnectionType, out Exception ex)
+        public static bool Query(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType, out Exception ex)
         {
             ex = null;
 
             try
             {
-
-                string ConnectionString = Connection.ToString(ConnectionType);
 
                 switch (ConnectionType)
                 {
@@ -1172,9 +627,11 @@ namespace K2host.Data
                         using (var tempconnection = new SqlConnection(ConnectionString))
                         using (var tempcommand = new SqlCommand(Sql))
                         {
-                            tempcommand.CommandTimeout = 500;
+                            tempcommand.CommandType = type;
                             tempcommand.Connection = tempconnection;
                             tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
                             tempcommand.ExecuteNonQuery();
                             return true;
                         }
@@ -1185,10 +642,11 @@ namespace K2host.Data
                         using (var tempconnection = new OracleConnection(ConnectionString))
                         using (var tempcommand = new OracleCommand(Sql))
                         {
-
-                            tempcommand.CommandTimeout = 500;
+                            tempcommand.CommandType = type;
                             tempcommand.Connection = tempconnection;
-                            tempconnection.Open(); ;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
                             tempcommand.ExecuteNonQuery();
                             return true;
                         }
@@ -1198,9 +656,11 @@ namespace K2host.Data
                         using (var tempconnection = new MySqlConnection(ConnectionString))
                         using (var tempcommand = new MySqlCommand(Sql))
                         {
-                            tempcommand.CommandTimeout = 500;
+                            tempcommand.CommandType = type;
                             tempcommand.Connection = tempconnection;
                             tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
                             tempcommand.ExecuteNonQuery();
                             return true;
                         }
@@ -1217,93 +677,138 @@ namespace K2host.Data
             }
         }
 
-        public static int QueryODBC(string Sql, string ConnectionString, int sqltimout = 500)
+        public static bool Query(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType, int sqltimout = 500)
         {
             try
             {
 
-                using var MyConnection = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var MyCommand = new System.Data.Odbc.OdbcCommand
+                switch (ConnectionType)
                 {
-                    CommandTimeout = sqltimout,
-                    Connection = MyConnection,
-                    CommandText = Sql
-                };
-                MyConnection.Open();
-                return MyCommand.ExecuteNonQuery();
+                    case OConnectionType.SQLStandardSecurity:
+                    case OConnectionType.SQLTrustedConnection:
+                    case OConnectionType.SQLTrustedConnectionCE:
+
+                        using (var tempconnection = new SqlConnection(ConnectionString))
+                        using (var tempcommand = new SqlCommand(Sql))
+                        {
+                            tempcommand.CommandType = type; 
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.Connection = tempconnection;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+                            tempcommand.ExecuteNonQuery();
+                            return true;
+                        }
+
+                    case OConnectionType.OracleStandardSecurity:
+                    case OConnectionType.OracleCredentialsSecurity:
+
+                        using (var tempconnection = new OracleConnection(ConnectionString))
+                        using (var tempcommand = new OracleCommand(Sql))
+                        {
+                            tempcommand.CommandType = type; 
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.Connection = tempconnection;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+                            tempcommand.ExecuteNonQuery();
+                            return true;
+                        }
+
+                    case OConnectionType.MySqlStandardSecurity:
+
+                        using (var tempconnection = new MySqlConnection(ConnectionString))
+                        using (var tempcommand = new MySqlCommand(Sql))
+                        {
+                            tempcommand.CommandType = type;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.Connection = tempconnection;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+                            tempcommand.ExecuteNonQuery();
+                            return true;
+                        }
+
+                }
+
+                return false;
+
             }
-            catch
+            catch (Exception)
             {
-                return -1;
+                throw;
             }
         }
 
-        public static int QueryODBC(string Sql, OConnection Connection, OConnectionType ConnectionType, int sqltimout = 500)
+        public static bool Query(CommandType type, string Sql, DbParameter[] Parameters, string ConnectionString, OConnectionType ConnectionType, out Exception ex, int sqltimout = 500)
         {
+            ex = null;
+
             try
             {
-                string ConnectionString     = Connection.ToString(ConnectionType);
-                using var MyConnection      = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var MyCommand         = new System.Data.Odbc.OdbcCommand
+
+                switch (ConnectionType)
                 {
-                    CommandTimeout = sqltimout,
-                    Connection = MyConnection,
-                    CommandText = Sql
-                };
-                MyConnection.Open();
-                return MyCommand.ExecuteNonQuery();
+                    case OConnectionType.SQLStandardSecurity:
+                    case OConnectionType.SQLTrustedConnection:
+                    case OConnectionType.SQLTrustedConnectionCE:
+
+                        using (var tempconnection = new SqlConnection(ConnectionString))
+                        using (var tempcommand = new SqlCommand(Sql))
+                        {
+                            tempcommand.CommandType = type;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.Connection = tempconnection;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+                            tempcommand.ExecuteNonQuery();
+                            return true;
+                        }
+
+                    case OConnectionType.OracleStandardSecurity:
+                    case OConnectionType.OracleCredentialsSecurity:
+
+                        using (var tempconnection = new OracleConnection(ConnectionString))
+                        using (var tempcommand = new OracleCommand(Sql))
+                        {
+                            tempcommand.CommandType = type;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.Connection = tempconnection;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+                            tempcommand.ExecuteNonQuery();
+                            return true;
+                        }
+
+                    case OConnectionType.MySqlStandardSecurity:
+
+                        using (var tempconnection = new MySqlConnection(ConnectionString))
+                        using (var tempcommand = new MySqlCommand(Sql))
+                        {
+                            tempcommand.CommandType = type;
+                            tempcommand.CommandTimeout = sqltimout;
+                            tempcommand.Connection = tempconnection;
+                            tempconnection.Open();
+                            if (Parameters != null)
+                                tempcommand.Parameters.AddRange(Parameters);
+                            tempcommand.ExecuteNonQuery();
+                            return true;
+                        }
+
+                }
+
+                return false;
 
             }
-            catch
+            catch (Exception error)
             {
-                return -1;
-            }
-        }
-
-        public static int QueryODBC(string StoredProc, OdbcParameter[] Parameters, string ConnectionString, int sqltimout = 500)
-        {
-            try
-            {
-                using var MyConnection = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var MyCommand = new System.Data.Odbc.OdbcCommand(StoredProc)
-                {
-                    CommandTimeout = sqltimout,
-                    Connection = MyConnection,
-                    CommandType = CommandType.StoredProcedure
-                };
-                if (Parameters != null)
-                    MyCommand.Parameters.AddRange(Parameters);
-                MyConnection.Open();
-                return MyCommand.ExecuteNonQuery();
-
-            }
-            catch
-            {
-                return -1;
-            }
-        }
-
-        public static int QueryODBC(string StoredProc, OdbcParameter[] Parameters, OConnection Connection, OConnectionType ConnectionType, int sqltimout = 500)
-        {
-            try
-            {
-                string ConnectionString     = Connection.ToString(ConnectionType);
-                using var MyConnection      = new System.Data.Odbc.OdbcConnection(ConnectionString);
-                using var MyCommand         = new System.Data.Odbc.OdbcCommand(StoredProc)
-                {
-                    CommandTimeout  = sqltimout,
-                    Connection      = MyConnection,
-                    CommandType     = CommandType.StoredProcedure
-                };
-                if (Parameters != null)
-                    MyCommand.Parameters.AddRange(Parameters);
-                MyConnection.Open();
-                return MyCommand.ExecuteNonQuery();
-
-            }
-            catch
-            {
-                return -1;
+                ex = error;
+                return false;
             }
         }
 
@@ -1444,10 +949,9 @@ namespace K2host.Data
             string result = string.Empty;
             try
             {
-
-                foreach (object r in e.ItemArray)
+                e.ItemArray.ForEach(r => {
                     result += "'" + r.ToString() + "',";
-
+                });
                 result = result.Remove(result.Length - 1, 1);
             }
             catch { }
@@ -1459,10 +963,9 @@ namespace K2host.Data
             string result = string.Empty;
             try
             {
-
-                foreach (DataRow r in e)
+                e.ForEach(r => {
                     result += "'" + (string)r[0] + "',";
-
+                });
                 result = result.Remove(result.Length - 1, 1);
             }
             catch { }
@@ -1474,168 +977,13 @@ namespace K2host.Data
             string result = string.Empty;
             try
             {
-
-                foreach (DataRow r in e)
+                e.ForEach(r => {
                     result += "" + Convert.ToString(r[0]) + ",";
-
+                });
                 result = result.Remove(result.Length - 1, 1);
             }
             catch { }
             return result;
-        }
-
-        public static string GetSqlRepresentation(PropertyInfo p, object value)
-        {
-
-            StringBuilder output = new();
-
-            if (value == null)
-                output.Append("NULL");
-            else
-            {
-                if (p == null)
-                    output.Append(value.ToString());
-                else
-                {
-
-                    p.GetCustomAttributes<ODataPropertyAttribute>()?.OrderBy(a => a.Order).ForEach(a => { value = a.OnWriteValue(value); });
-
-                    ODataContext.PropertyConverters.Where(c => c.CanConvert(p)).ForEach(c => { value = c.OnConvertTo(p, value, null); });
-
-                    switch (p.PropertyType.Name)
-                    {
-                        case "String":
-                            output.Append("'" + SafeString(value.ToString()) + "'");
-                            break;
-                        case "DateTime":
-                            output.Append("CAST('" + ConvertDateTime((DateTime)value) + "' AS DATETIME)");
-                            break;
-                        case "Date":
-                            output.Append("CAST('" + ConvertDateTime((DateTime)value) + "' AS DATE)");
-                            break;
-                        case "TimeSpan":
-                            output.Append("CAST('" + ConvertTime((TimeSpan)value) + "' AS TIME(0))");
-                            break;
-                        case "Boolean":
-                            output.Append(Convert.ToBoolean(value) ? "1" : "0");
-                            break;
-                        default:
-                            if (p.PropertyType.BaseType.Name == "Enum")
-                                output.Append(Convert.ToInt32(value)); //.ToString()
-                            else
-                                output.Append(value.ToString());
-                            break;
-                    }
-                }
-            }
-
-            return output.ToString();
-
-        }
-      
-        public static string GetSqlRepresentation(SqlDbType DataType, object value)
-        {
-
-            StringBuilder output = new();
-
-            switch (DataType)
-            {
-                case SqlDbType.VarChar:
-                case SqlDbType.NVarChar:
-                case SqlDbType.NText:
-                case SqlDbType.Text:
-                    output.Append("'" + SafeString(value.ToString()) + "'");
-                    break;
-                case SqlDbType.DateTime:
-                    output.Append("CAST('" + ConvertDateTime((DateTime)value) + "' AS DATETIME)");
-                    break;
-                case SqlDbType.Date:
-                    output.Append("CAST('" + ConvertDateTime((DateTime)value) + "' AS DATE)");
-                    break;
-                case SqlDbType.Time:
-                    output.Append("CAST('" + ConvertTime((TimeSpan)value) + "' AS TIME(0))");
-                    break;
-                case SqlDbType.Bit:
-                    output.Append(Convert.ToBoolean(value) ? "1" : "0");
-                    break;
-                default:
-                    output.Append(value.ToString());
-                    break;
-            }
-
-            return output.ToString();
-
-        }
-      
-        public static SqlDbType GetSqlDbType(Type t)
-        {
-            SqlDbType _result;
-
-            if (t.BaseType.Name == "Enum")
-                _result = SqlDbType.Int;
-            else
-            {
-                _result = (t.Name.ToString()) switch
-                {
-                    "String" => SqlDbType.NVarChar,
-                    "Int16" => SqlDbType.SmallInt,
-                    "Int32" => SqlDbType.Int,
-                    "Int64" => SqlDbType.BigInt,
-                    "UInt16" => SqlDbType.SmallInt,
-                    "UInt32" => SqlDbType.Int,
-                    "UInt64" => SqlDbType.BigInt,
-                    "Decimal" => SqlDbType.Decimal,
-                    "Double" => SqlDbType.Float,
-                    "Single" => SqlDbType.Float,
-                    "DateTime" => SqlDbType.DateTime,
-                    "Date" => SqlDbType.Date,
-                    "Time" => SqlDbType.Time,
-                    "TimeSpan" => SqlDbType.Time,
-                    "Boolean" => SqlDbType.Bit,
-                    "Byte[]" => SqlDbType.Binary,
-                    _ => SqlDbType.NVarChar,
-                };
-            }
-
-            return _result;
-        }
-
-        public static string GetSqlDefaultValueRepresentation(SqlDbType DataType, bool Encapsulate = false) 
-        {
-
-            return (DataType) switch
-            {
-                SqlDbType.Char          => Encapsulate ? "''''" : "''",
-                SqlDbType.VarChar       => Encapsulate ? "''''" : "''",
-                SqlDbType.NVarChar      => Encapsulate ? "''''" : "''",
-                SqlDbType.NChar         => Encapsulate ? "''''" : "''",
-                SqlDbType.NText         => Encapsulate ? "''''" : "''",
-
-                SqlDbType.Bit           => "0",
-                SqlDbType.TinyInt       => "0",
-                SqlDbType.SmallInt      => "0",
-                SqlDbType.Int           => "0",
-                SqlDbType.BigInt        => "0",
-
-                SqlDbType.SmallMoney    => "0.00",
-                SqlDbType.Real          => "0.00",
-                SqlDbType.Decimal       => "0.00",
-                SqlDbType.Float         => "0.00",
-                SqlDbType.Money         => "0.00",
-
-                SqlDbType.Date          => "getdate()",
-                SqlDbType.SmallDateTime => "getdate()",
-                SqlDbType.DateTime      => "getdate()",
-                SqlDbType.DateTime2     => "getdate()",
-                SqlDbType.Time          => Encapsulate ? "''00:00:00''" : "'00:00:00'",
-
-                SqlDbType.Binary        => "0x00",
-                SqlDbType.Image         => "0x00",  
-                SqlDbType.VarBinary     => "0x00",
-
-                _                       => Encapsulate ? "''''" : "''",
-            };
-
         }
 
         public static object NullSafeString(object arg, object returnIfnull = null)
@@ -1804,6 +1152,27 @@ namespace K2host.Data
                 }
             }
             return returnValue;
+        }
+       
+        public static Type NullSafeType(this Type e)
+        {
+            string type = e.FullName;
+
+            if (!type.StartsWith("System.Nullable`1"))
+                return e;
+
+            try
+            {
+                type = type.Remove(0, type.IndexOf("[[") + 2);
+                type = type.Remove(type.IndexOf(","));
+            }
+            catch (Exception)
+            {
+                return e;
+            }
+
+            return Type.GetType(type);
+
         }
 
         #endregion
@@ -2039,31 +1408,6 @@ namespace K2host.Data
 
         }
 
-        public static string ToCsv(this DataSet dataset, bool incHeaders = false, bool quoteWrap = false, string colSep = "", string rowSep = "\r\n")
-        {
-            return dataset.Tables[0].ToCsv(incHeaders, quoteWrap, colSep, rowSep);
-        }
-
-        public static string ToCsv(this DataTable table, bool incHeaders = false, bool quoteWrap = false, string colSep = "", string rowSep = "\r\n")
-        {
-
-            string format = string.Empty;
-            string output = string.Empty;
-
-            if (quoteWrap)
-                format = string.Join(colSep, Enumerable.Range(0, table.Columns.Count).Select(i => string.Format("\"{{{0}}}\"", i)));
-            else
-                format = string.Join(colSep, Enumerable.Range(0, table.Columns.Count).Select(i => string.Format("{{{0}}}", i)));
-
-            if (incHeaders)
-                output += string.Format(format, table.Columns.OfType<DataColumn>().Select(i => i.ColumnName).ToArray()) + rowSep;
-
-            output += string.Join(rowSep, table.Rows.OfType<DataRow>().Select(i => string.Format(format, i.ItemArray)));
-
-            return output;
-
-        }
-
         public static DataSet FromCSV(Stream e, string password)
         {
 
@@ -2173,6 +1517,218 @@ namespace K2host.Data
 
                 }
             });
+
+        }
+
+        #endregion
+
+        #region Tools
+
+        public static ReportParameterInfoCollection GetSsrsReportParameters(string serverUrl, string reportPath)
+        {
+            return new ServerReport
+            {
+                ReportServerUrl = new Uri(serverUrl),
+                ReportPath      = reportPath
+            }.GetParameters();
+        }
+
+        public static JObject GetParmsForSSRS(IDictionary<string, string> query)
+        {
+
+            //This comes from the formatted plugin template config file. (SQLReportingService)
+            string ServiceUrl = query["Service Url"];
+            string ReportPath = query["Report Path"];
+
+            JObject output = new();
+
+            try
+            {
+
+                ReportParameterInfoCollection Parameters = GetSsrsReportParameters(ServiceUrl, ReportPath);
+               
+                Parameters
+                    .Cast<ReportParameterInfo>()
+                    .ToArray()
+                    .ForEach(Parameter => {
+                        output.Add(new JProperty("listitem", new JObject(
+                            new JProperty("name", Parameter.Name),
+                            new JProperty("prompt", Parameter.Prompt),
+                            new JProperty("datatype", Parameter.DataType.ToString())
+                        )));
+                    });
+
+            }
+            catch (Exception ex)
+            {
+                output.Add(new JProperty("response", new JObject(new JProperty("message", "Error: " + ex.Message))));
+            }
+
+            return output;
+
+        }
+
+        public static JObject GetSSSPList(IDictionary<string, string> query)
+        {
+
+            JObject output = new(new JProperty("listitem", new JArray()));
+
+            try
+            {
+
+                int port = 1433;
+
+                if (!string.IsNullOrEmpty(query["Port"]))
+                    port = Convert.ToInt32(query["Port"]);
+
+                string sql = "SELECT [NAME] FROM sysobjects WHERE type = 'P' AND category = 0;";
+
+                DataSet ds = new ODataConnection(
+                    query["Server"],
+                    query["Database"],
+                    port,
+                    query["Username"],
+                    query["Password"],
+                    (OConnectionType)Convert.ToInt32(query["Connection"])
+                ).Get(CommandType.Text, sql, null);
+
+                JArray list = (JArray)output.Properties().Where(p => p.Name == "listitem").FirstOrDefault().Value;
+
+                if (ds != null && ds.Tables[0].Rows.Count > 0)
+                {
+                    ds.Tables[0].Rows.ForEach(r => {
+                        list.Add(new JObject(new JProperty("name", r["NAME"].ToString())));
+                    });
+                    Clear(ds);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                output.Add(new JProperty("response", new JObject(new JProperty("message", "Error: " + ex.Message))));
+            }
+
+            return output;
+
+        }
+
+        public static JObject GetParmsForSSSP(IDictionary<string, string> query)
+        {
+
+            JObject output = new(new JProperty("listitem", new JArray()));
+
+            try
+            {
+
+                int port = 1433;
+
+                if (!string.IsNullOrEmpty(query["Port"]))
+                    port = Convert.ToInt32(query["Port"]);
+
+                string sql = "SELECT pa.parameter_id AS [Id], pa.name AS [Name], UPPER(t.name) AS [DataType], t.max_length AS [Length] ";
+                sql += "FROM sys.parameters pa ";
+                sql += "INNER JOIN sys.procedures p ON pa.object_id = p.object_id ";
+                sql += "INNER JOIN sys.types t ON pa.system_type_id = t.system_type_id AND pa.user_type_id = t.user_type_id ";
+                sql += "WHERE p.name = '" + query["Procedures"] + "';";
+
+                DataSet ds = new ODataConnection(
+                    query["Server"],
+                    query["Database"],
+                    port,
+                    query["Username"],
+                    query["Password"],
+                    (OConnectionType)Convert.ToInt32(query["Connection"])
+                ).Get(CommandType.Text, sql, null);
+
+                JArray list = (JArray)output.Properties().Where(p => p.Name == "listitem").FirstOrDefault().Value;
+
+                if (ds != null && ds.Tables[0].Rows.Count > 0) {
+                    ds.Tables[0].Rows.ForEach(r => {
+                        list.Add(new JObject(
+                            new JProperty("name", r["Name"].ToString()),
+                            new JProperty("datatype", r["DataType"].ToString()),
+                            new JProperty("datalength", r["Length"].ToString())
+                        ));
+                    });
+                    Clear(ds);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                output.Add(new JProperty("response", new JObject(new JProperty("message", "Error: " + ex.Message))));
+            }
+
+            return output;
+
+        }
+        
+        public static bool Clear(DataSet e)
+        {
+            try
+            {
+                e.Clear();
+                e.Tables.Clear();
+                e.Dispose();
+                e = null;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Extentions
+
+        public static void ForEach(this DataRowCollection rows, Action<DataRow> action)
+        {
+
+            foreach (DataRow r in rows)
+                action(r);
+
+        }
+        
+        public static void ForEach(this DataColumnCollection columns, Action<DataColumn> action)
+        {
+
+            foreach (DataColumn c in columns)
+                action(c);
+
+        }
+
+        public static void ForEach(this DataSet dataset, Action<DataTable> action)
+        {
+
+            foreach (DataTable t in dataset.Tables)
+                action(t);
+
+        }
+
+        public static string ToCsv(this DataSet dataset, bool incHeaders = false, bool quoteWrap = false, string colSep = "", string rowSep = "\r\n")
+        {
+            return dataset.Tables[0].ToCsv(incHeaders, quoteWrap, colSep, rowSep);
+        }
+
+        public static string ToCsv(this DataTable table, bool incHeaders = false, bool quoteWrap = false, string colSep = "", string rowSep = "\r\n")
+        {
+
+            string format = string.Empty;
+            string output = string.Empty;
+
+            if (quoteWrap)
+                format = string.Join(colSep, Enumerable.Range(0, table.Columns.Count).Select(i => string.Format("\"{{{0}}}\"", i)));
+            else
+                format = string.Join(colSep, Enumerable.Range(0, table.Columns.Count).Select(i => string.Format("{{{0}}}", i)));
+
+            if (incHeaders)
+                output += string.Format(format, table.Columns.OfType<DataColumn>().Select(i => i.ColumnName).ToArray()) + rowSep;
+
+            output += string.Join(rowSep, table.Rows.OfType<DataRow>().Select(i => string.Format(format, i.ItemArray)));
+
+            return output;
 
         }
 
@@ -2292,180 +1848,7 @@ namespace K2host.Data
             return result;
         }
 
-        #endregion
-
-        #region Callback Loops
-
-        public static void Each(this DataRowCollection rows, Action<DataRow> predicate)
-        {
-
-            foreach (DataRow r in rows)
-                predicate(r);
-
-        }
-        
-        public static void Each(this DataColumnCollection columns, Action<DataColumn> predicate)
-        {
-
-            foreach (DataColumn c in columns)
-                predicate(c);
-
-        }
-
-        public static void Each(this DataSet dataset, Action<DataTable> predicate)
-        {
-
-            foreach (DataTable t in dataset.Tables)
-                predicate(t);
-
-        }
-
-        #endregion
-
-        #region Tools
-
-        public static ReportParameterInfoCollection GetSsrsReportParameters(string serverUrl, string reportPath)
-        {
-            return new ServerReport
-            {
-                ReportServerUrl = new Uri(serverUrl),
-                ReportPath      = reportPath
-            }.GetParameters();
-        }
-
-        public static JObject GetParmsForSSRS(IDictionary<string, string> query)
-        {
-
-            //This comes from the formatted plugin template config file. (SQLReportingService)
-            string ServiceUrl = query["Service Url"];
-            string ReportPath = query["Report Path"];
-
-            JObject output = new();
-
-            try
-            {
-
-                ReportParameterInfoCollection Parameters = GetSsrsReportParameters(ServiceUrl, ReportPath);
-               
-                Parameters
-                    .Cast<ReportParameterInfo>()
-                    .ToArray()
-                    .ForEach(Parameter => {
-                        output.Add(new JProperty("listitem", new JObject(
-                            new JProperty("name", Parameter.Name),
-                            new JProperty("prompt", Parameter.Prompt),
-                            new JProperty("datatype", Parameter.DataType.ToString())
-                        )));
-                    });
-
-            }
-            catch (Exception ex)
-            {
-                output.Add(new JProperty("response", new JObject(new JProperty("message", "Error: " + ex.Message))));
-            }
-
-            return output;
-
-        }
-
-        public static JObject GetSSSPList(IDictionary<string, string> query)
-        {
-
-            JObject output = new(new JProperty("listitem", new JArray()));
-
-            try
-            {
-
-                int port = 1433;
-
-                if (!string.IsNullOrEmpty(query["Port"]))
-                    port = Convert.ToInt32(query["Port"]);
-
-                OConnection c = new(
-                    query["Server"],
-                    query["Database"],
-                    port,
-                    query["Username"],
-                    query["Password"]
-                );
-
-                string sql = "SELECT [NAME] FROM sysobjects WHERE type = 'P' AND category = 0;";
-
-                DataSet ds = Get(sql, c.ToString((OConnectionType)Convert.ToInt32(query["Connection"])));
-
-                JArray list = (JArray)output.Properties().Where(p => p.Name == "listitem").FirstOrDefault().Value;
-
-                if (ds != null && ds.Tables[0].Rows.Count > 0)
-                {
-                    ds.Tables[0].Rows.Each(r => {
-                        list.Add(new JObject(new JProperty("name", r["NAME"].ToString())));
-                    });
-                    Clear(ds);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                output.Add(new JProperty("response", new JObject(new JProperty("message", "Error: " + ex.Message))));
-            }
-
-            return output;
-
-        }
-
-        public static JObject GetParmsForSSSP(IDictionary<string, string> query)
-        {
-
-            JObject output = new(new JProperty("listitem", new JArray()));
-
-            try
-            {
-
-                int port = 1433;
-
-                if (!string.IsNullOrEmpty(query["Port"]))
-                    port = Convert.ToInt32(query["Port"]);
-
-                OConnection c = new(
-                    query["Server"],
-                    query["Database"],
-                    port,
-                    query["Username"],
-                    query["Password"]
-                );
-
-                string sql = "SELECT pa.parameter_id AS [Id], pa.name AS [Name], UPPER(t.name) AS [DataType], t.max_length AS [Length] ";
-                sql += "FROM sys.parameters pa ";
-                sql += "INNER JOIN sys.procedures p ON pa.object_id = p.object_id ";
-                sql += "INNER JOIN sys.types t ON pa.system_type_id = t.system_type_id AND pa.user_type_id = t.user_type_id ";
-                sql += "WHERE p.name = '" + query["Procedures"] + "';";
-
-                DataSet ds = Get(sql, c.ToString((OConnectionType)Convert.ToInt32(query["Connection"])));
-                
-                JArray list = (JArray)output.Properties().Where(p => p.Name == "listitem").FirstOrDefault().Value;
-
-                if (ds != null && ds.Tables[0].Rows.Count > 0) {
-                    ds.Tables[0].Rows.Each(r => {
-                        list.Add(new JObject(
-                            new JProperty("name", r["Name"].ToString()),
-                            new JProperty("datatype", r["DataType"].ToString()),
-                            new JProperty("datalength", r["Length"].ToString())
-                        ));
-                    });
-                    Clear(ds);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                output.Add(new JProperty("response", new JObject(new JProperty("message", "Error: " + ex.Message))));
-            }
-
-            return output;
-
-        }
-        
-        public static string CreateTableSql(DataTable table)
+        public static string CreateTableSql(this DataTable table)
         {
             StringBuilder sql       = new();
             StringBuilder alterSql  = new();
@@ -2602,6 +1985,41 @@ namespace K2host.Data
 
             return sql.ToString();
         }
+        
+        public static ODataFieldSet[] GetFieldSets(this Type obj, ODataFieldSetType e)
+        {
+            List<ODataFieldSet> output = new();
+
+            ODataExceptionType NonInteract = e switch
+            {
+                ODataFieldSetType.SELECT => ODataExceptionType.NON_SELECT,
+                ODataFieldSetType.INSERT => ODataExceptionType.NON_INSERT,
+                ODataFieldSetType.UPDATE => ODataExceptionType.NON_UPDATE,
+                _ => ODataExceptionType.NON_SELECT,
+            };
+
+            foreach (PropertyInfo p in obj.GetProperties())
+                if (p.GetCustomAttributes<ODataExceptionAttribute>().Any())
+                {
+                    if (!p.GetCustomAttributes<ODataExceptionAttribute>().First().ODataExceptionType.HasFlag(NonInteract))
+                        output.Add(
+                            new ODataFieldSet()
+                            {
+                                Column      = p,
+                                DataType    = ODataContext.Connection().GetDbDataType(p.PropertyType)
+                            });
+
+                }
+                else
+                    output.Add(
+                        new ODataFieldSet()
+                        {
+                            Column      = p,
+                            DataType    = ODataContext.Connection().GetDbDataType(p.PropertyType)
+                        });
+
+            return output.ToArray();
+        }
 
         public static string GetMappedName(this Type e) 
         {
@@ -2623,6 +2041,265 @@ namespace K2host.Data
 
         #endregion
 
+        #region IQueryable Extentions For Linq
+
+        /// <summary>
+        /// This is like the FirstOrDefault() but builds with reflection.
+        /// </summary>
+        /// <typeparam name="I"></typeparam>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static I ToFirstOrDefault<I>(this IQueryable<I> e, out ODataException ex)
+            where I : class, IDataObject
+        {
+            ex = null;
+         
+            try
+            {
+                var Query = e.ToParametrizedSql();
+
+                DataSet dts = ODataContext
+                    .Connection()
+                    .Get(
+                        CommandType.Text,
+                        Query.Item1,
+                        Query.Item2.ToArray()
+                    );
+
+                if (dts == null)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToFirstOrDefault(): No Dataset(s) Returned.");
+                    return default;
+                }
+
+                if (dts.Tables.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToFirstOrDefault(): No Dataset Table(s) Returned.");
+                    return default;
+                }
+
+                if (dts.Tables[0].Rows.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToFirstOrDefault(): No Dataset Table Row(s) Returned.");
+                    return default;
+                }
+
+                I output = ODataObject<I>
+                    .Retrieve(dts);
+
+                Clear(dts);
+
+                return output;
+
+            }
+            catch (Exception exc)
+            {
+                ex = new ODataException(exc.Message, exc);
+                return default;
+            }
+
+        }
+
+        /// <summary>
+        /// This is pulls an array of, but builds with reflection.
+        /// </summary>
+        /// <typeparam name="I"></typeparam>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static I[] ToArrayOrDefault<I>(this IQueryable<I> e, out ODataException ex)
+            where I : class, IDataObject
+        {
+
+            ex = null;
+
+            try
+            {
+                var Query = e.ToParametrizedSql();
+
+                DataSet dts = ODataContext
+                    .Connection()
+                    .Get(
+                        CommandType.Text,
+                        Query.Item1,
+                        Query.Item2.ToArray()
+                    );
+
+                if (dts == null)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToArrayOrDefault(): No Dataset(s) Returned.");
+                    return Array.Empty<I>();
+                }
+
+                if (dts.Tables.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToArrayOrDefault(): No Dataset Table(s) Returned.");
+                    return Array.Empty<I>();
+                }
+
+                if (dts.Tables[0].Rows.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToArrayOrDefault(): No Dataset Table Row(s) Returned.");
+                    return Array.Empty<I>();
+                }
+
+                I[] output = ODataObject<I>
+                    .List(dts)
+                    .ToArray();
+
+                Clear(dts);
+
+                return output;
+
+            }
+            catch (Exception exc)
+            {
+                ex = new ODataException(exc.Message, exc);
+                return Array.Empty<I>();
+            }
+
+
+        }
+
+        /// <summary>
+        /// This will convert the query and return the json representation directly from the database.
+        /// </summary>
+        /// <typeparam name="I"></typeparam>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static string ToJsonOrDefault<I>(this IQueryable<I> e, out ODataException ex)
+            where I : class, IDataObject
+        {
+            ex = null;
+
+            try
+            {
+
+                var Query = e.ToParametrizedSql();
+
+                var sqlString = Query.Item1 + $" FOR JSON PATH, ROOT('{typeof(I).GetMappedName()}')";
+
+                DataSet dts = ODataContext
+                    .Connection()
+                    .Get(
+                        CommandType.Text,
+                        sqlString,
+                        Query.Item2.ToArray()
+                    );
+
+                if (dts == null)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToJsonOrDefault(): No Dataset(s) Returned.");
+                    return string.Empty;
+                }
+
+                if (dts.Tables.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToJsonOrDefault(): No Dataset Table(s) Returned.");
+                    return string.Empty;
+                }
+
+                if (dts.Tables[0].Rows.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToJsonOrDefault(): No Dataset Table Row(s) Returned.");
+                    return string.Empty;
+                }
+
+                string output = string.Empty;
+
+                foreach (DataRow r in dts.Tables[0].Rows)
+                    output += r[0].ToString();
+
+                Clear(dts);
+
+                return output;
+
+            }
+            catch (Exception exc)
+            {
+                ex = new ODataException(exc.Message, exc);
+                return string.Empty;
+            }
+
+        }
+
+        /// <summary>
+        /// This will convert the query and return the json representation directly from the database with a total rec count for paging etc...
+        /// </summary>
+        /// <typeparam name="I"></typeparam>
+        /// <param name="e"></param>
+        /// <param name="enableTotalCount"></param>
+        /// <param name="totalCount"></param>
+        /// <returns></returns>
+        public static string ToJsonOrDefaultWithCount<I>(this IQueryable<I> e, bool enableTotalCount, out long totalCount, out ODataException ex)
+            where I : class, IDataObject
+        {
+            ex = null;
+            totalCount = 0;
+
+            try
+            {
+
+                var Query = e.ToParametrizedSql();
+
+                var sqlString = Query.Item1 + $" FOR JSON PATH, ROOT('{typeof(I).GetMappedName()}')";
+
+                if (enableTotalCount)
+                    sqlString += $"; SELECT COUNT(*) FROM {typeof(I).GetMappedName()};";
+
+                DataSet dts = ODataContext
+                    .Connection()
+                    .Get(
+                        CommandType.Text,
+                        sqlString,
+                        Query.Item2.ToArray()
+                    );
+
+                if (dts == null)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToJsonOrDefaultWithCount(): No Dataset(s) Returned.");
+                    return string.Empty;
+                }
+
+                if (dts.Tables.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToJsonOrDefaultWithCount(): No Dataset Table(s) Returned.");
+                    return string.Empty;
+                }
+
+                if (dts.Tables[0].Rows.Count <= 0)
+                {
+                    ex = new ODataException("K2host.Data." + typeof(I).Name + ".ToJsonOrDefaultWithCount(): No Dataset Table Row(s) Returned.");
+                    return string.Empty;
+                }
+
+                if (enableTotalCount)
+                    totalCount = Convert.ToInt64(dts.Tables[1].Rows[0][0]);
+
+                string output = string.Empty;
+
+                foreach (DataRow r in dts.Tables[0].Rows)
+                    output += r[0].ToString();
+
+                Clear(dts);
+
+                return output;
+
+            }
+            catch (Exception exc)
+            {
+                ex = new ODataException(exc.Message, exc);
+                return string.Empty;
+            }
+
+        }
+
+
+
+
+
+
+
+        #endregion
     }
 
 }

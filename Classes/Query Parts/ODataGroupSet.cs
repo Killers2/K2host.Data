@@ -9,6 +9,12 @@
 using System;
 using System.Reflection;
 using System.Text;
+using System.Data;
+
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
+
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -33,22 +39,15 @@ namespace K2host.Data.Classes
         }
 
         /// <summary>
-        /// This returns the field as a group by field statment.
+        /// This returns and builds the string representation of the query segment.
         /// </summary>
-        /// <param name="UseFieldPrefixing"></param>
         /// <returns></returns>
         public string ToString(bool UseFieldPrefixing = false)
         {
-
-            StringBuilder output = new();
-
-            if (UseFieldPrefixing)
-                output.Append(Column.ReflectedType.GetMappedName() + ".");
-
-            output.Append("[" + Column.Name + "]");
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .GroupSetBuildString(this, UseFieldPrefixing);
         }
 
         #region Deconstuctor

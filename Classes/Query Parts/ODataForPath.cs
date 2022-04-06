@@ -5,9 +5,15 @@
 '| Use: General                                         |
 ' \====================================================/
 */
-using K2host.Data.Enums;
 using System;
 using System.Text;
+using System.Data;
+
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
+
+using K2host.Data.Enums;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -49,37 +55,17 @@ namespace K2host.Data.Classes
             Root            = string.Empty;
 
         }
-
+       
         /// <summary>
-        /// This returns and builds the string representation of the FOR statment.
+        /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() 
+        public override string ToString()
         {
-
-            StringBuilder output = new();
-
-            output.Append("FOR " + PathType.ToString() + " ");
-
-            if (PathType == ODataForPathType.JSON) {
-                if (string.IsNullOrEmpty(Root) && string.IsNullOrEmpty(Path)) 
-                    output.Append("AUTO ");
-                else if (!string.IsNullOrEmpty(Root) && string.IsNullOrEmpty(Path))
-                    output.Append("PATH, ROOT('" + Root + "') ");
-                else if (string.IsNullOrEmpty(Root) && !string.IsNullOrEmpty(Path))
-                    output.Append("PATH ");
-            }
-
-            if (PathType == ODataForPathType.XML) {
-                output.Append("PATH('" + Path + "') ");
-                if (!string.IsNullOrEmpty(Root))
-                    output.Append(", ROOT('" + Root + "') ");
-                if (EnableXmlXSI)
-                    output.Append(", ELEMENTS XSINIL ");
-            }
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .ForPathBuildString(this);
         }
 
         #region Deconstuctor

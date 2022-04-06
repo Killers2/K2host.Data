@@ -7,6 +7,8 @@
 */
 
 using System;
+using System.Collections.Generic;
+using System.Data.Common;
 
 using K2host.Data.Classes;
 
@@ -15,6 +17,12 @@ namespace K2host.Data.Interfaces
 
     public interface IDataQuery : IDisposable
     {
+
+        /// <summary>
+        /// The list of parameters for parameter based queries
+        /// </summary>
+        IEnumerable<DbParameter> Parameters { get; set; }
+
         /// <summary>
         /// The object you are selecting from mapped in the database (table name).
         /// </summary>

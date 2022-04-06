@@ -8,7 +8,12 @@
 using System;
 using System.Reflection;
 using System.Text;
+using System.Data;
 
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
+
+using K2host.Data.Extentions.ODataConnection;
 using K2host.Data.Enums;
 
 namespace K2host.Data.Classes
@@ -49,46 +54,17 @@ namespace K2host.Data.Classes
             Column  = null;
             Order   = ODataOrderType.ASC;
         }
-
+        
         /// <summary>
-        /// This returns and builds the string representation of the order segment.
+        /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public string ToString(string prefix = "") 
+        public string ToString(string prefix = "")
         {
-
-            StringBuilder output = new();
-            
-            if (Random)
-                output.Append("NEWID()");
-            else
-            {
-                if (Function != ODataFunction.NONE)
-                    output.Append(Function.ToString() + "(");
-
-                output.Append(prefix + Column.Name);
-
-                if (Function != ODataFunction.NONE)
-                    output.Append(')');
-
-                switch (Order)
-                {
-                    case ODataOrderType.ASC:
-                        output.Append(" ASC");
-                        break;
-                    case ODataOrderType.DESC:
-                        output.Append(" DESC");
-                        break;
-                    case ODataOrderType.NONE:
-                        output.Append(string.Empty);
-                        break;
-                    default:
-                        output.Append(string.Empty);
-                        break;
-                }
-            }
-
-            return output.ToString();
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .OrderBuildString(this, prefix);
         }
 
         #region Deconstuctor

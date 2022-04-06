@@ -12,14 +12,10 @@ namespace K2host.Data.Enums
     /// <summary>
     /// This is used on the OConnection to help create the instance.
     /// </summary>
-    public enum OConnectionType
+    public enum OConnectionDbType: int
     {
-        SQLStandardSecurity,
-        SQLTrustedConnection,
-        SQLTrustedConnectionCE,
-        OracleStandardSecurity,
-        OracleCredentialsSecurity,
-        MySqlStandardSecurity,
-        MySqlStandardNoDatabase,
+        SqlDbType       = 1,
+        MySqlDbType     = 2,
+        OracleDbType    = 4
     }
 }

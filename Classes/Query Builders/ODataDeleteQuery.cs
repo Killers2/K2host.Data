@@ -7,9 +7,17 @@
 */
 using System;
 using System.Text;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Data;
+
+using Oracle.ManagedDataAccess.Client;
+using MySql.Data.MySqlClient;
 
 using K2host.Core;
 using K2host.Data.Interfaces;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -19,7 +27,11 @@ namespace K2host.Data.Classes
     /// </summary>
     public class ODataDeleteQuery : IDataQuery
     {
-     
+        /// <summary>
+        /// The list of parameters for parameter based queries
+        /// </summary>
+        public IEnumerable<DbParameter> Parameters { get; set; } = Array.Empty<DbParameter>();
+
         /// <summary>
         /// The object you are selecting from mapped in the database (table name).
         /// </summary>
@@ -43,22 +55,12 @@ namespace K2host.Data.Classes
         /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() 
+        public override string ToString()
         {
-
-            StringBuilder output = new();
-
-            output.Append("DELETE FROM tbl_" + From.GetMappedName());
-
-            if (Where != null) {
-                output.Append(" WHERE ");
-                Where.ForEach(condition => { 
-                    output.Append(condition.ToString(false)); 
-                });
-            }
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .DeleteQueryBuildString(this);
         }
 
         #region Deconstuctor

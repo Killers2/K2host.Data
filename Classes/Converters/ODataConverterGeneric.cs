@@ -6,8 +6,6 @@
 ' \====================================================/
 */
 
-using System;
-using System.Net;
 using System.Linq;
 using System.Reflection;
 
@@ -18,34 +16,34 @@ namespace K2host.Data.Attributes
 {
 
 
-
     /// <summary>
-    /// 
+    /// Used on properties as an converter for reading and writing columns.
+    /// I is the property type in the model.
     /// </summary>
     /// <typeparam name="I"></typeparam>
     public class ODataConverterGeneric<I> : ODataPropertyConverter
     {
         
         /// <summary>
-        /// 
+        /// The event to trigger when the property needs to convert to.
         /// </summary>
         public OnConvertEvent OnConvertToTrigger { get; set; }
 
         /// <summary>
-        /// 
+        /// The event to trigger when the property needs to convert from.
         /// </summary>
         public OnConvertEvent OnConvertFromTrigger { get; set; }
 
         /// <summary>
-        /// 
+        /// The constructor
         /// </summary>
         public ODataConverterGeneric() 
         { 
         
         }
-        
+
         /// <summary>
-        /// 
+        /// Checks to see if this converter can canvert by type of prop and does not have the <see cref="ODataPropertyAttribute"/>
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
@@ -53,9 +51,9 @@ namespace K2host.Data.Attributes
         {
             return property.PropertyType == typeof(I) && property.GetCustomAttributes<ODataTypeAttribute>().Any() && !property.GetCustomAttributes<ODataPropertyAttribute>().Any();
         }
-       
+
         /// <summary>
-        /// 
+        /// Invokes the ConvertTo <see cref="OnConvertEvent"/> for the user to convert outside of this method
         /// </summary>
         /// <param name="property"></param>
         /// <param name="model"></param>
@@ -70,7 +68,7 @@ namespace K2host.Data.Attributes
         }
 
         /// <summary>
-        /// 
+        /// Invokes the ConvertFrom <see cref="OnConvertEvent"/> for the user to convert outside of this method
         /// </summary>
         /// <param name="property"></param>
         /// <param name="value"></param>

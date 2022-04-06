@@ -12,6 +12,8 @@ using System.Linq;
 
 using K2host.Core;
 using K2host.Data.Delegates;
+using K2host.Data.Extentions.ODataConnection;
+using K2host.Data.Interfaces;
 
 using gd = K2host.Data.OHelpers;
 
@@ -47,14 +49,14 @@ namespace K2host.Data.Classes
         /// <summary>
         /// This the connection string to the database on the server.
         /// </summary>
-        string ConnectionString { get; }
+        IDataConnection Connection { get; }
 
         /// <summary>
         /// Creates the instance for this class
         /// </summary>
-        public ODataMigrationTool(string connectionString) 
+        public ODataMigrationTool(IDataConnection connection) 
         {
-            ConnectionString    = connectionString;
+            Connection          = connection;
             Version             = string.Empty;
             Path                = string.Empty;
             GetDbContext        = null;
@@ -66,24 +68,19 @@ namespace K2host.Data.Classes
         /// </summary>
         public ODataMigrationTool Initiate() 
         {
-
-            if (string.IsNullOrEmpty(ConnectionString))
-                throw new NullReferenceException("The connection string applied was empty.");
             
             if (string.IsNullOrEmpty(Version))
                 throw new NullReferenceException("The database version string applied was empty.");
 
-            OConnection Connection = new(ConnectionString);
-
             //Create db if it dose't exist. and set up a version number for the system.
             if (!Connection.TestDatabase(out DataTable record))
             {
-                Connection.CreateMsSqlDatabase(Path);
-                gd.Query(ODataObject<object>.CreateMigrationVersionTable(Connection.Database), ConnectionString);
+                Connection.CreateDatabase(Path);
+                Connection.Query(CommandType.Text, ODataObject<ODataTrigger>.CreateMigrationVersionTable(Connection.Database), null);
             }
 
             //Lets make any changes to the database if there version has changed.
-            DataSet MigrationVersion = gd.Get(ODataObject<object>.GetMigrationVersion(), ConnectionString);
+            DataSet MigrationVersion = Connection.Get(CommandType.Text, ODataObject<ODataTrigger>.GetMigrationVersion(), null);
 
             string cv = MigrationVersion.Tables[0].Rows[0][0].ToString();
 
@@ -99,27 +96,26 @@ namespace K2host.Data.Classes
                     .Where(t => t.FullName == "K2host.Data.Classes.ODataObject`1")
                     .FirstOrDefault();
 
-                DbContext.Each(i => {
-                    object o = Activator.CreateInstance(odo.MakeGenericType(new[] { i }), new object[] { ConnectionString });
+                DbContext.ForEach(i => {
+                    object o = Activator.CreateInstance(odo.MakeGenericType(new[] { i }));
                     o.GetType().GetMethod("MergeMigration").Invoke(o, new object[] { Connection });
                     o.GetType().GetMethod("Dispose").Invoke(o, null);
-                    return true;
                 });
 
                 string[] TablesToRemove = Connection
                     .GetTables()
                     .Filter(t => {
-                        return !DbContext.Where(c => c.GetMappedName() == t.Remove(0, 4)).Any();
+                        return !DbContext.Where(c => c.GetMappedName() == t.Remove(0, 4) || c.GetMappedName().ToLower() == t.Remove(0, 4)).Any();
                     });
 
                 TablesToRemove.ForEach(t => {
-                    gd.Query(ODataObject<object>.DropDatabaseTable(t.Remove(0, 4)), ConnectionString);
-                    gd.Query(ODataObject<object>.DropDatabaseStoredProc(t.Remove(0, 4)), ConnectionString);
+                    Connection.Query(CommandType.Text, ODataObject<ODataTrigger>.DropDatabaseTable(t.Remove(0, 4)), null);
+                    Connection.Query(CommandType.Text, ODataObject<ODataTrigger>.DropDatabaseStoredProc(t.Remove(0, 4)), null);
                 });
 
                 GetDbContextCustom?.Invoke(Connection);
 
-                gd.Query(ODataObject<object>.SetMigrationVersion(Version), ConnectionString);
+                Connection.Query(CommandType.Text, ODataObject<ODataTrigger>.SetMigrationVersion(Version), null);
 
             }
 

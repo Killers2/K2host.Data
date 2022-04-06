@@ -31,7 +31,7 @@ namespace K2host.Data.Attributes
         }
 
         /// <summary>
-        /// 
+        /// Checks to see if this converter can canvert by type of prop and does not have the <see cref="ODataPropertyAttribute"/>
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
@@ -41,7 +41,7 @@ namespace K2host.Data.Attributes
         }
 
         /// <summary>
-        /// 
+        /// Used to change the value of the property on the object.
         /// </summary>
         /// <param name="property"></param>
         /// <param name="model"></param>
@@ -51,9 +51,9 @@ namespace K2host.Data.Attributes
             //No Implimented Here.
             return default;
         }
-       
+
         /// <summary>
-        /// 
+        /// Used to change the value of the property on the object.
         /// </summary>
         /// <param name="property"></param>
         /// <param name="value"></param>

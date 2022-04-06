@@ -6,12 +6,17 @@
 ' \====================================================/
 */
 using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Data;
+using System.Linq;
+
+using Oracle.ManagedDataAccess.Client;
+using MySql.Data.MySqlClient;
 
 using K2host.Core;
-
-using gd = K2host.Data.OHelpers;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -21,7 +26,11 @@ namespace K2host.Data.Classes
     /// </summary>
     public class ODataInsertQuery : IDisposable
     {
-     
+        /// <summary>
+        /// The list of parameters for parameter based queries
+        /// </summary>
+        public IEnumerable<DbParameter> Parameters { get; set; } = Array.Empty<DbParameter>();
+
         /// <summary>
         /// Optional: Enables Primary Key inserting.
         /// </summary>
@@ -66,51 +75,12 @@ namespace K2host.Data.Classes
         /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() 
+        public override string ToString()
         {
-
-            StringBuilder output = new();
-
-            var ToTableName = To.GetMappedName();
-
-            if (UseIdentityInsert)
-                output.Append("SET IDENTITY_INSERT tbl_" + ToTableName + " ON;");
-
-            output.Append("INSERT INTO tbl_" + ToTableName + " ( ");
-
-            Fields.ForEach(f => { output.Append(f.ToInsertString() + ", "); });
-
-            output.Remove(output.Length - 2, 2);
-
-            output.Append(')');
-
-            if (ValueSets.Count <= 0 && Select == null) {
-                output.Append(" VALUES (");
-                Fields.ForEach(field => { output.Append(field.NewValue + ", "); });
-                output.Remove(output.Length - 2, 2);
-                output.Append(')');
-            }
-
-            if (ValueSets.Count > 0 && Select == null) {
-                output.Append(" VALUES ");
-                ValueSets.ForEach(values => {
-                    output.Append('(');
-                    values.ForEach(field => { output.Append(field.NewValue + ", "); });
-                    output.Remove(output.Length - 2, 2);
-                    output.Append("), ");
-                });
-                output.Remove(output.Length - 2, 2);
-            }
-
-            if (ValueSets.Count <= 0 && Select != null)
-                output.Append(Select.ToString());
-
-
-            if (UseIdentityInsert)
-                output.Append("SET IDENTITY_INSERT tbl_" + ToTableName + " OFF;");
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .InsertQueryBuildString(this);
         }
 
         #region Deconstuctor

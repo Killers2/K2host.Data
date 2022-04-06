@@ -7,9 +7,9 @@
 */
 using System;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 using K2host.Data.Attributes;
-using K2host.Data.Classes;
 using K2host.Data.Interfaces;
 
 namespace K2host.Data.Delegates
@@ -19,9 +19,12 @@ namespace K2host.Data.Delegates
 
     public delegate IEnumerable<Type> OnGetDbContext();
 
-    public delegate void OnGetDbContextCustom(OConnection DbConnection);
+    public delegate void OnGetDbContextCustom(IDataConnection DbConnection);
 
     public delegate object OnConvertEvent(object value, ODataTypeAttribute attribute);
 
+    public delegate void OnConfiguringDbContext(DbContextOptionsBuilder e);
+
+    public delegate void OnModelCreatingDbContext(ModelBuilder e);
 
 }

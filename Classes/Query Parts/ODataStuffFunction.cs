@@ -7,6 +7,12 @@
 */
 using System;
 using System.Text;
+using System.Data;
+
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
+
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -49,20 +55,15 @@ namespace K2host.Data.Classes
         }
 
         /// <summary>
-        /// This returns and builds the string representation of the case segment.
+        /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() 
+        public override string ToString()
         {
-
-            StringBuilder output = new();
-
-            output.Append(" STUFF((");
-            output.Append(Query.ToString());
-            output.Append("), " + StartPosistion.ToString() + ", " + NumberOfChars.ToString() + ", '" + ReplacementExpression + "')");
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .StuffFunctionBuildString(this);
         }
 
         #region Deconstuctor

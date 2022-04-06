@@ -8,8 +8,12 @@
 
 using System;
 using System.Data;
-
+using K2host.Data.Classes;
+using K2host.Data.Enums;
+using K2host.Data.Extentions.ODataConnection;
 using K2host.Data.Interfaces;
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
 
 namespace K2host.Data.Attributes
 {
@@ -19,27 +23,22 @@ namespace K2host.Data.Attributes
     public class ODataTypeAttribute : ODataAttribute
     {
 
-        readonly SqlDbType      MsSqlType;
-        readonly string         StrType;
-        readonly int            TypeSize;
-        readonly int            TypePlaces;
-        readonly int            SelectedType = 0;
+        readonly int        DbSqlType       = -1;
+        readonly int        DbMySqlType     = -1;
+        readonly int        DbOracleType    = -1;
+        readonly int        TypeSize;
+        readonly int        TypePlaces;
+        readonly string     TypeFormat;
 
-        public string           StrDataType         { get { return StrType; } }
-        public SqlDbType        MsSQLDataType       { get { return MsSqlType; } }
-        public int              DataTypeSize        { get { return TypeSize; } }
-        public int              DataTypePlaces      { get { return TypePlaces; } }
+        public int          SQLDataType         { get { return DbSqlType; } }
+        public int          MySQLDataType       { get { return DbMySqlType; } }
+        public int          OracleSQLDataType   { get { return DbOracleType; } }
 
-        /// <summary>
-        /// Creates the attribute on a property to define an data source link
-        /// </summary>
-        /// <param name="typeName">Sql datatype name</param>
-        public ODataTypeAttribute(string typeName)
-        {
-            StrType     = typeName;
-            TypeSize    = 0;
-            TypePlaces  = 0;
-        }
+        public int          DataTypeSize        { get { return TypeSize; } }
+        public int          DataTypePlaces      { get { return TypePlaces; } }
+        public string       DataTypeFormat      { get { return TypeFormat; } }
+
+        public OConnectionDbType DataDbType { get; private set; }
 
         /// <summary>
         /// Creates the attribute on a property to define an data source link
@@ -49,10 +48,86 @@ namespace K2host.Data.Attributes
         /// <param name="places">Decimal places in a number field</param>
         public ODataTypeAttribute(SqlDbType typeName, int size = 0, int places = 0)
         {
-            MsSqlType       = typeName;
+            DbSqlType       = (int)typeName;
             TypeSize        = size;
             TypePlaces      = places;
-            SelectedType    = 1;
+            DataDbType      = OConnectionDbType.SqlDbType;
+        }
+
+        /// <summary>
+        /// Creates the attribute on a property to define an data source link
+        /// </summary>
+        /// <param name="typeName">Sqls data type.</param>
+        /// <param name="size">Using size as -1 will invoke the max in the field, this is also used as a format provider for some types like TIME(0)</param>
+        /// <param name="places">Decimal places in a number field</param>
+        public ODataTypeAttribute(MySqlDbType typeName, int size = 0, int places = 0, string typeFormat = "")
+        {
+            DbMySqlType     = (int)typeName;
+            TypeSize        = size;
+            TypePlaces      = places;
+            DataDbType      = OConnectionDbType.MySqlDbType;
+            TypeFormat      = typeFormat;
+        }
+        
+        /// <summary>
+        /// Creates the attribute on a property to define an data source link
+        /// </summary>
+        /// <param name="typeName">Sqls data type.</param>
+        /// <param name="size">Using size as -1 will invoke the max in the field, this is also used as a format provider for some types like TIME(0)</param>
+        /// <param name="places">Decimal places in a number field</param>
+        public ODataTypeAttribute(MySqlDbTypeExt typeName, int size = 0, int places = 0, string typeFormat = "")
+        {
+            DbMySqlType     = (int)typeName;
+            TypeSize        = size;
+            TypePlaces      = places;
+            DataDbType      = OConnectionDbType.MySqlDbType;
+            TypeFormat      = typeFormat;
+        }
+
+        /// <summary>
+        /// Creates the attribute on a property to define an data source link
+        /// </summary>
+        /// <param name="typeName">Sqls data type.</param>
+        /// <param name="size">Using size as -1 will invoke the max in the field, this is also used as a format provider for some types like TIME(0)</param>
+        /// <param name="places">Decimal places in a number field</param>
+        public ODataTypeAttribute(OracleDbType typeName, int size = 0, int places = 0)
+        {
+            DbOracleType    = (int)typeName;
+            TypeSize        = size;
+            TypePlaces      = places;
+            DataDbType      = OConnectionDbType.OracleDbType;
+        }
+
+        /// <summary>
+        /// Creates the attribute on a property to define an data source link
+        /// </summary>
+        /// <param name="typeName">Sqls data type.</param>
+        /// <param name="size">Using size as -1 will invoke the max in the field, this is also used as a format provider for some types like TIME(0)</param>
+        /// <param name="places">Decimal places in a number field</param>
+        public ODataTypeAttribute(SqlDbType typeNameSql, MySqlDbType typeNameMySql, OracleDbType typeNameOracle, int size = 0, int places = 0)
+        {
+            DbSqlType       = (int)typeNameSql;
+            DbMySqlType     = (int)typeNameMySql;
+            DbOracleType    = (int)typeNameOracle;
+            TypeSize        = size;
+            TypePlaces      = places;
+            DataDbType      = OConnectionDbType.SqlDbType | OConnectionDbType.MySqlDbType | OConnectionDbType.OracleDbType;
+        }
+
+        /// <summary>
+        /// Creates the attribute on a property to define an data source link
+        /// </summary>
+        /// <param name="typeName">Sqls data type.</param>
+        /// <param name="size">Using size as -1 will invoke the max in the field, this is also used as a format provider for some types like TIME(0)</param>
+        /// <param name="places">Decimal places in a number field</param>
+        public ODataTypeAttribute(SqlDbType typeNameSql, MySqlDbTypeExt typeNameMySql, OracleDbType typeNameOracle, int size = 0, int places = 0)
+        {
+            DbSqlType       = (int)typeNameSql;
+            DbMySqlType     = (int)typeNameMySql;
+            DbOracleType    = (int)typeNameOracle;
+            TypeSize        = size;
+            TypePlaces      = places;
+            DataDbType      = OConnectionDbType.SqlDbType | OConnectionDbType.MySqlDbType | OConnectionDbType.OracleDbType;
         }
 
         /// <summary>
@@ -61,53 +136,11 @@ namespace K2host.Data.Attributes
         /// <returns></returns>
         public override string ToString() 
         {
-            string output = string.Empty;
-
-            if (SelectedType == 0)
-            {
-                output = StrDataType;
-            }
-            else if (SelectedType == 1)
-            {
-                output = MsSQLDataType switch
-                {
-                    SqlDbType.BigInt =>             "BIGINT",
-                    SqlDbType.Binary =>             "BINARY(" + (DataTypeSize < 0 ? "MAX" : DataTypeSize.ToString()) + ")",
-                    SqlDbType.Bit =>                "BIT",
-                    SqlDbType.Char =>               "CHAR(" + (DataTypeSize < 0 ? "MAX" : DataTypeSize.ToString()) + ")",
-                    SqlDbType.DateTime =>           "DATETIME",
-                    SqlDbType.Decimal =>            "DECIMAL(" + DataTypeSize.ToString() + ", " + DataTypePlaces.ToString() + ")",
-                    SqlDbType.Float =>              "FLOAT",
-                    SqlDbType.Image =>              "IMAGE",
-                    SqlDbType.Int =>                "INT",
-                    SqlDbType.Money =>              "MONEY",
-                    SqlDbType.NChar =>              "NCHAR",
-                    SqlDbType.NText =>              "NTEXT",
-                    SqlDbType.NVarChar =>           "NVARCHAR(" + (DataTypeSize < 0 ? "MAX" : DataTypeSize.ToString()) + ")",
-                    SqlDbType.Real =>               "REAL",
-                    SqlDbType.UniqueIdentifier =>   "UNIQUEIDENTIFIER",
-                    SqlDbType.SmallDateTime =>      "SMALLDATETIME",
-                    SqlDbType.SmallInt =>           "SMALLINT",
-                    SqlDbType.SmallMoney =>         "SMALLMONEY",
-                    SqlDbType.Text =>               "TEXT",
-                    SqlDbType.Timestamp =>          "TIMESTAMP",
-                    SqlDbType.TinyInt =>            "TINYINT",
-                    SqlDbType.VarBinary =>          "VARBINARY(" + (DataTypeSize < 0 ? "MAX" : DataTypeSize.ToString()) + ")",
-                    SqlDbType.VarChar =>            "VARCHAR(" + (DataTypeSize < 0 ? "MAX" : DataTypeSize.ToString()) + ")",
-                    SqlDbType.Variant =>            "VARIANT",
-                    SqlDbType.Xml =>                "XML",
-                    SqlDbType.Udt =>                "UDT",
-                    SqlDbType.Structured =>         "STRUCTURED",
-                    SqlDbType.Date =>               "DATE",
-                    SqlDbType.Time =>               "TIME(" + DataTypeSize.ToString() + ")",
-                    SqlDbType.DateTime2 =>          "DATETIME2",
-                    SqlDbType.DateTimeOffset =>     "DATETIMEOFFSET",
-                    _ => "NVARCHAR(MAX)",
-                };
-            }
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .GetTypeAttributeRepresentation(this);
             
-            return output;
-
         }
 
     }

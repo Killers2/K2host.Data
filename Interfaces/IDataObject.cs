@@ -7,6 +7,7 @@
 */
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using K2host.Data.Classes;
 using K2host.Data.Enums;
 
@@ -41,17 +42,12 @@ namespace K2host.Data.Interfaces
         /// <summary>
         /// The date and time of the recored being updated.
         /// </summary>
-        DateTime Updated { get; set; }
+        DateTime? Updated { get; set; }
 
         /// <summary>
         /// The date and time of the recored was inserted.
         /// </summary>
-        DateTime Datestamp { get; set; }
-
-        /// <summary>
-        /// The objects database connection string.
-        /// </summary>
-        string ConnectionString { get; set; }
+        DateTime? Datestamp { get; set; }
 
         /// <summary>
         /// This holding space allows to hold information / object data while in use.
@@ -92,7 +88,7 @@ namespace K2host.Data.Interfaces
         /// Returns and array of ODataFieldSet based on this instance properties and values.
         /// </summary>
         /// <returns></returns>
-        ODataFieldSet[] GetFieldSets(ODataFieldSetType e);
+        ODataFieldSet[] GetFieldSets(ODataFieldSetType e, out IEnumerable<DbParameter> parameters);
 
     }
 

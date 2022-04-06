@@ -24,7 +24,7 @@ namespace K2host.Data.Interfaces
         string Type { get; set; }
 
         /// <summary>
-        /// The Connection string to the database.
+        /// The Connections to the database.
         /// </summary>
         string Connection { get; set; }
 

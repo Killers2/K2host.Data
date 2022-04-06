@@ -6,13 +6,17 @@
 ' \====================================================/
 */
 using System;
-using System.Data;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Data;
 
-using K2host.Core;
+using MySql.Data.MySqlClient;
+using Oracle.ManagedDataAccess.Client;
 
-using gd = K2host.Data.OHelpers;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -50,41 +54,20 @@ namespace K2host.Data.Classes
         }
 
         /// <summary>
-        /// This returns and builds the string representation of the case segment.
+        /// This returns and builds the string representation of the query segment.
         /// </summary>
         /// <returns></returns>
-        public string ToString(bool UseFieldPrefixing = false) 
+        public string ToString(out IEnumerable<DbParameter> parameters, bool UseFieldPrefixing = false)
         {
 
-            StringBuilder output = new();
+            string output = ODataContext
+                .Connection()
+                .GetFactory()
+                .CaseBuildString(this, out IEnumerable<DbParameter> pta, UseFieldPrefixing);
 
-            output.Append("WHEN (");
+            parameters = pta;
 
-            When.ForEach(condition => { 
-                output.Append(condition.ToString(UseFieldPrefixing)); 
-            });
-
-            output.Append(") THEN ");
-
-            if (Then.GetType().Name == "RuntimePropertyInfo")
-                output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, "[" + ((PropertyInfo)Then).Name) + "]");
-            else if (Then.GetType().Name == "ODataPropertyInfo")
-                output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((PropertyInfo)Then).Name));
-            else
-                output.Append(gd.GetSqlRepresentation(gd.GetSqlDbType(Then.GetType()), Then));
-
-            if (Else != null)
-            {
-                output.Append(" ELSE ");
-                if (Else.GetType().Name == "RuntimePropertyInfo")
-                    output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, "[" + ((PropertyInfo)Else).Name) + "]");
-                else if (Else.GetType().Name == "ODataPropertyInfo")
-                    output.Append(gd.GetSqlRepresentation(SqlDbType.Structured, ((PropertyInfo)Else).Name));
-                else
-                    output.Append(gd.GetSqlRepresentation(gd.GetSqlDbType(Else.GetType()), Else));
-            }
-
-            return output.ToString();
+            return output;
 
         }
 

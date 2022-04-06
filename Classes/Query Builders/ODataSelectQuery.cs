@@ -6,13 +6,19 @@
 ' \====================================================/
 */
 using System;
-using System.Reflection;
 using System.Text;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Data;
+
+using Oracle.ManagedDataAccess.Client;
+using MySql.Data.MySqlClient;
 
 using K2host.Core;
-using K2host.Data.Attributes;
 using K2host.Data.Enums;
 using K2host.Data.Interfaces;
+using K2host.Data.Extentions.ODataConnection;
 
 namespace K2host.Data.Classes
 {
@@ -22,6 +28,11 @@ namespace K2host.Data.Classes
     /// </summary>
     public class ODataSelectQuery : IDataQuery
     {
+
+        /// <summary>
+        /// The list of parameters for parameter based queries
+        /// </summary>
+        public IEnumerable<DbParameter> Parameters { get; set; } = Array.Empty<DbParameter>();
 
         /// <summary>
         /// Optional: Enables placing the object / table name in front of the field xxxx.[xxxxx].
@@ -149,145 +160,10 @@ namespace K2host.Data.Classes
         /// <returns></returns>
         public override string ToString() 
         {
-
-            StringBuilder output = new();
-
-            if(IsSubQuery)
-                output.Append('(');
-
-            output.Append("SELECT ");
-
-            if (Stuff != null) 
-            {
-                output.Append(Stuff.ToString() + " ");
-            }
-            else
-            {
-
-                if (Top > 0)
-                    output.Append("TOP " + Top.ToString() + " ");
-
-                if (Distinct)
-                    output.Append("DISTINCT ");
-
-                if (Fields != null)
-                    Fields.ForEach(f => { output.Append(f.ToSelectString(UseFieldPrefixing, UseFieldDefaultAlias) + ", "); });
-
-                if (Joins != null && IncludeJoinFields)
-                    Joins.ForEach(j =>
-                    {
-                        if (j.Join != null && j.JoinQuery == null)
-                            j.Join.GetFieldSets(ODataFieldSetType.SELECT).ForEach(f => { output.Append(f.ToSelectString(true, true) + ", "); });
-                        if (j.Join == null && j.JoinQuery != null)
-                            j.JoinQuery.Fields.ForEach(f => { output.Append(f.ToSelectString(j.JoinQuery.UseFieldPrefixing, j.JoinQuery.UseFieldDefaultAlias) + ", "); });
-                    });
-
-                if (Applies != null && IncludeApplyFields)
-                    Applies.ForEach(a => { a.Query.Fields.ForEach(f => { output.Append(a.Alias + ".[" + a.Alias + "." + f.Column.Name + "] AS [" + a.Alias + "." + f.Column.Name + "], "); }); ; });
-
-                //https://www.sqlshack.com/overview-of-the-sql-row-number-function/
-                //ROW_NUMBER() OVER ( PARTITION / ORDER BY ) AS RowNumber       
-
-                output.Remove(output.Length - 2, 2);
-
-                if (From != null)
-                {
-
-                    var FromTableName = From.GetMappedName();
-                    output.Append(" FROM tbl_" + FromTableName + " " + FromTableName);
-
-                    if (Joins != null)
-                        Joins.ForEach(j =>
-                        {
-
-                            if (j.Join != null && j.JoinQuery == null)
-                            {
-                                var JoinTableName = j.Join.GetMappedName();
-                                output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN tbl_" + JoinTableName + " " + JoinTableName + " ON ");
-                            }
-
-                            if (j.Join == null && j.JoinQuery != null)
-                                output.Append(" " + j.JoinType.ToString().Replace("_", " ") + " JOIN ( " + j.JoinQuery.ToString() + " ) " + j.JoinQuery.From.GetMappedName() + " ON ");
-
-                            if (j.JoinConditions != null && j.JoinConditions.Length > 0)
-                            {
-                                j.JoinConditions.ForEach(condition => {
-                                    output.Append(condition.ToString(true));
-                                });
-                            }
-                            else
-                            {
-                                var JoinTableName = string.Empty;
-                                
-                                if (j.Join != null && j.JoinQuery == null)
-                                    JoinTableName = j.Join.GetMappedName();
-                                
-                                if (j.Join == null && j.JoinQuery != null)
-                                    JoinTableName = j.JoinQuery.From.GetMappedName();
-
-                                output.Append(JoinTableName + ".[" + j.JoinOnField.Name + "] = " + j.JoinEqualsField.ReflectedType.GetMappedName() + ".[" + j.JoinEqualsField.Name + "]");
-
-                            }
-
-                        });
-
-                    if (Applies != null)
-                        Applies.ForEach(a => { output.Append(" " + a.ToString()); });
-
-                    //https://www.w3schools.com/sql/sql_union.asp
-                    //UNION     -- distince values
-                    //UNION ALL -- allows dupe values
-
-                    output.Append(" WHERE ");
-                
-                    if (!IncludeRemoved)
-                        output.Append("(" + FromTableName + ".[Flags] >= 0) AND (" + FromTableName + ".[Flags] & " + ((long)ODataFlags.Deleted).ToString() + ") != " + ((long)ODataFlags.Deleted).ToString() + " ");
-
-                    if (Where != null && !IncludeRemoved)
-                        output.Append(" AND ");
-            
-                    if (Where != null)
-                        Where.ForEach(condition => { output.Append(condition.ToString((Joins != null || Applies != null || UseFieldPrefixing))); });
-
-                    if (Group != null)
-                    {
-                        output.Append(" GROUP BY ");
-                        Group.ForEach(g => { output.Append(g.ToString(UseFieldPrefixing) + ", "); });
-                        output.Remove(output.Length - 2, 2);
-                    }
-
-                    if (Having != null)
-                    {
-                        output.Append(" HAVING ");
-                        Having.ForEach(h => { output.Append(h.ToString(UseFieldPrefixing) + " "); });
-                        output.Remove(output.Length - 2, 2);
-                    }
-
-                    if (Order != null)
-                    {
-                        output.Append(" ORDER BY ");
-                        Order.ForEach(o => { output.Append(o.ToString((Joins != null || Applies != null || UseFieldPrefixing) ? o.Column.ReflectedType.GetMappedName() + "." : string.Empty) + ", "); });
-                        output.Remove(output.Length - 2, 2);
-                    }
-
-                }
-
-                if (TakeSkip != null)
-                    output.Append(" " + TakeSkip.ToString());
-
-                if (ForPath != null)
-                    output.Append(" " + ForPath.ToString());
-
-                if (IsSubQuery)
-                    output.Append(") ");
-
-            }
-
-            if (!string.IsNullOrEmpty(Alias) && (IsSubQuery || Stuff != null))
-                output.Append("AS [" + Alias + "] ");
-
-            return output.ToString();
-
+            return ODataContext
+                .Connection()
+                .GetFactory()
+                .SelectQueryBuildString(this);
         }
 
         #region Deconstuctor

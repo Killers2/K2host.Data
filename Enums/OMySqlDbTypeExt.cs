@@ -7,19 +7,14 @@
 */
 
 
-namespace K2host.Data.Enums
+namespace MySql.Data.MySqlClient
 {
     /// <summary>
-    /// This is used on the OConnection to help create the instance.
+    /// This is used extend the MySql.Data.MySqlClient.MySqlDbType
     /// </summary>
-    public enum OConnectionType
+    public enum MySqlDbTypeExt : int
     {
-        SQLStandardSecurity,
-        SQLTrustedConnection,
-        SQLTrustedConnectionCE,
-        OracleStandardSecurity,
-        OracleCredentialsSecurity,
-        MySqlStandardSecurity,
-        MySqlStandardNoDatabase,
+        NONE    = 9999999,
+        Boolean = 1001,
     }
 }
