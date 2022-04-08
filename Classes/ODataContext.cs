@@ -149,37 +149,6 @@ namespace K2host.Data.Classes
             if (Options.Connections.Count > 0)
                 Options.Primary = Options.Connections.Values.First();
 
-
-            //TODO:  Options.MigrationTool = 
-
-            //Lets use a migration tool to create / make any changes to our current database.
-            //new ODataMigrationTool(Memory.DBConnection)
-            //{
-            //    Path = Memory.DatabasePath,
-            //    Version = Memory.DatabaseVersion,
-            //    GetDbContext = () => {
-            //        return AppDomain.CurrentDomain
-            //            .GetAssemblies()
-            //            .SelectMany(t => t.GetTypes())
-            //            .Where(t => t.IsClass && t.IsPublic && (
-            //                    t.Namespace == "K2host.Erp.Classes" ||
-            //                    t.Namespace == "K2host.Pdf.Classes" ||
-            //                    t.Namespace == "K2host.AsyncStreams.Classes"
-            //                )
-            //            )
-            //            .Append(typeof(OCertification))
-            //            .Append(typeof(ODataTrigger))
-            //            .Append(typeof(OWebApiLogRequest))
-            //            .Append(typeof(OWebSitePage))
-            //            .Append(typeof(OLogEntrie));
-            //    },
-            //    GetDbContextCustom = (e) => { }
-            //}
-            //.Initiate()
-            //.Dispose();
-
-
-
         }
       
         /// <summary>
