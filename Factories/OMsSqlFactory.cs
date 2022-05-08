@@ -42,7 +42,7 @@ namespace K2host.Data.Factories
 
         public string DropDatabaseStoredProc(string typeName)
         {
-            return "DROP PROCEDURE IF EXISTS " + typeName;
+            return "DROP PROCEDURE IF EXISTS spr_" + typeName;
         }
 
         public string DropDatabaseTable(string typeName)
@@ -52,7 +52,7 @@ namespace K2host.Data.Factories
 
         public string DropDatabaseStoredProc(Type obj)
         {
-            return "DROP PROCEDURE IF EXISTS " + obj.GetTypeInfo().GetMappedName();
+            return "DROP PROCEDURE IF EXISTS spr_" + obj.GetTypeInfo().GetMappedName();
         }
 
         public string DropDatabaseTable(Type obj)
@@ -69,7 +69,7 @@ namespace K2host.Data.Factories
 
             var tnm = obj.GetTypeInfo().GetMappedName();
 
-            output.Append("CREATE PROCEDURE [dbo].[" + tnm + "]" + Environment.NewLine);
+            output.Append("CREATE PROCEDURE [dbo].[spr_" + tnm + "]" + Environment.NewLine);
             output.Append(" @Uid BIGINT = 0" + Environment.NewLine);
             output.Append(",@ParentId BIGINT = 0" + Environment.NewLine);
             output.Append(",@ParentType NVARCHAR(255) = ''" + Environment.NewLine);
@@ -289,7 +289,7 @@ namespace K2host.Data.Factories
             output.Append("    BEGIN" + Environment.NewLine);
             output.Append("        DROP TABLE IF EXISTS " + tnm + Environment.NewLine);
             output.Append("    END" + Environment.NewLine);
-            output.Append("    DROP PROCEDURE IF EXISTS " + tnm + Environment.NewLine);
+            output.Append("    DROP PROCEDURE IF EXISTS spr_" + tnm + Environment.NewLine);
             output.Append("END" + Environment.NewLine);
 
             //Lets merge migration backup and / or remove
@@ -1355,6 +1355,9 @@ namespace K2host.Data.Factories
                 output.Append('(');
                 output.Append(e.SubQuery.ToString());
                 output.Append(") ");
+                
+                parameters = parameters.Concat(e.SubQuery.Parameters);
+                e.SubQuery.Parameters = Array.Empty<DbParameter>();
 
                 if (e.Cast != ODataCast.NONE)
                     output.Append(" AS " + e.Cast.ToString() + ") ");

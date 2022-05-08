@@ -975,10 +975,11 @@ namespace K2host.Data.Classes
         {
             pException = null;
 
-            if (items[0].GetType().ReflectedType != typeof(I))
-            {
-                pException = new ODataException("K2host.Data." + typeof(I).Name + ".Remove(): The types do not match.");
-                return false;
+            if (items[0].GetType() != typeof(I)) {
+                if (items[0].GetType().ReflectedType != typeof(I)) {
+                    pException = new ODataException("K2host.Data." + typeof(I).Name + ".Remove(): The types do not match.");
+                    return false;
+                }
             }
 
             try
@@ -1023,10 +1024,13 @@ namespace K2host.Data.Classes
         {
             pException = null;
 
-            if (items[0].GetType().ReflectedType != typeof(I))
+            if (items[0].GetType() != typeof(I))
             {
-                pException = new ODataException("K2host.Data." + typeof(I).Name + ".PermenentlyRemove(): The types do not match.");
-                return false;
+                if (items[0].GetType().ReflectedType != typeof(I))
+                {
+                    pException = new ODataException("K2host.Data." + typeof(I).Name + ".Remove(): The types do not match.");
+                    return false;
+                }
             }
 
             try
@@ -1913,6 +1917,65 @@ namespace K2host.Data.Classes
             return output;
 
         }
+        
+        /// <summary>
+        /// Used to run the SELECT SQL command and builds the query based on the ODataSelectQuery object.
+        /// </summary>
+        /// <param name="Query"></param>
+        /// <param name="ex"></param>
+        /// <returns></returns>
+        public static List<I> RetrieveForTable(ODataSelectQuery Query, bool enableTotalCount, out long totalCount, out ODataException ex)
+        {
+
+            ex = null;
+            totalCount = 0;
+
+            string suffix = string.Empty;
+
+            if (enableTotalCount)
+            {
+                ODataSelectQuery countQuery = new()
+                {
+                    IncludeApplyFields = false,
+                    IncludeJoinFields = false,
+                    UseFieldDefaultAlias = false,
+                    UseFieldPrefixing = false,
+                    Fields = new ODataFieldSet[] {
+                        new  ODataFieldSet(){
+                            Function    = ODataFunction.COUNT,
+                            Column      = Query.From.GetProperty("Uid")
+                        }
+                    },
+                    From = Query.From
+                };
+                suffix += "; " + countQuery.ToString() + ";";
+                //suffix += "; SELECT COUNT(*) FROM tbl_" + Query.From.GetMappedName() + ";";
+            }
+
+            DataSet dts = ODataContext.Connection().Get(CommandType.Text, Query.ToString() + suffix, Query.Parameters.ToArray());
+
+            if (dts == null)
+            {
+                ex = new ODataException("K2host.Data." + typeof(I).Name + ".RetrieveJSON(): No Dataset(s) Returned.");
+                return default;
+            }
+
+            if (dts.Tables.Count <= 0)
+            {
+                ex = new ODataException("K2host.Data." + typeof(I).Name + ".RetrieveJSON(): No Dataset Table(s) Returned.");
+                return default;
+            }
+
+            if (enableTotalCount)
+                totalCount = Convert.ToInt64(dts.Tables[1].Rows[0][0]);
+
+            List<I> result = List(dts);
+
+            gd.Clear(dts);
+
+            return result;
+
+        }
 
         /// <summary>
         /// This is used to completly remove and the recreate the table and stored procedure of type I in the database.
@@ -2119,7 +2182,7 @@ namespace K2host.Data.Classes
 
                 I result = Activator.CreateInstance<I>();
 
-                bool isPrefixed = r.Table.Columns[0].Caption.Contains(".");
+                bool isPrefixed = r.Table.Columns.Cast<DataColumn>().Any(c => c.Caption.Contains("."));
 
                 if (!isPrefixed)
                 {
@@ -2159,10 +2222,10 @@ namespace K2host.Data.Classes
                     IEnumerable<DataColumn> tColumns = r.Table.Columns.Cast<DataColumn>();
 
                     tColumns
-                        .Where(c => c.Caption.Remove(c.Caption.IndexOf(".")) == typeof(I).Name)
+                        .Where(c => !c.Caption.Contains(".") || c.Caption.Remove(c.Caption.IndexOf(".")) == typeof(I).Name)
                         .ForEach(c => {
 
-                            string columnName = c.Caption.Remove(0, c.Caption.IndexOf(".") + 1);
+                            string columnName = c.Caption.Contains(".") ? c.Caption.Remove(0, c.Caption.IndexOf(".") + 1) : c.Caption;
 
                             PropertyInfo p = result.GetType()
                             .GetProperty(columnName).DeclaringType
@@ -2180,6 +2243,7 @@ namespace K2host.Data.Classes
                         });
 
                     tColumns
+                        .Where(c => c.Caption.Contains("."))
                         .Select(c => c.Caption.Remove(c.Caption.IndexOf(".")))
                         .Distinct()
                         .Where(n => n != typeof(I).Name)
@@ -2192,7 +2256,7 @@ namespace K2host.Data.Classes
                             {
 
                                 tColumns
-                                    .Where(c => c.Caption.Remove(c.Caption.IndexOf(".")) == type)
+                                    .Where(c => c.Caption.Contains(".") && c.Caption.Remove(c.Caption.IndexOf(".")) == type)
                                     .ForEach(c =>
                                     {
                                         string cname = c.Caption.Remove(0, c.Caption.IndexOf(".") + 1);
@@ -2223,7 +2287,7 @@ namespace K2host.Data.Classes
                         });
 
                     tColumns
-                        .Where(c => !c.Caption.Contains("."))
+                        .Where(c => !c.Caption.Contains(".") && !typeof(I).GetProperties().ToArray().Any(p => p.Name == c.Caption))
                         .ForEach(c => {
                             ((IDataObject)result).ExtendedColumns.Add(c.Caption, r[c.Caption]);
                         });

@@ -508,7 +508,7 @@ namespace K2host.Data.Extentions.ODataConnection
                 return true;
 
             }
-            catch
+            catch(Exception)
             {
                 return false;
             }

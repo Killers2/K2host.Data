@@ -16,14 +16,15 @@ Also supports external data triggers using the trigger service to get any reques
     <PackageIconUrl />
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>K2host, Data, Database, EntityFramework, DMM, data model mapping</PackageTags>
-    <Version>1.0.5</Version>
+    <Version>2.0.9</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>D:\Development\K2host Works\K2host.Packages\K2host.Data\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Classes\ODataFieldSet.cs~RF130f9fb7.TMP" />
-    <None Remove="Classes\ODataObject.cs~RF3c47a816.TMP" />
-    <None Remove="Classes\ODataObject.cs~RF85cfeaa.TMP" />
-    <None Remove="Factories\OMySqlFactory.cs~RF19c3e81f.TMP" />
+    <None Remove="LICENSE" />
     <None Include="..\..\K2host.Pictures\Icon128.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
@@ -33,6 +34,8 @@ Also supports external data triggers using the trigger service to get any reques
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
+
+
 
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.15.0" />
